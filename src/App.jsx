@@ -1,37 +1,15 @@
-// import React from 'react';
-// import Navbar from './components/Nav';
-// import Hero from './components/Hero';
-// import CategoryGrid from './components/CategoryGrid';
-// import FeaturedProducts from './components/FeaturedProducts';
-
-
-// // import Newsletter from './components/Newsletter';
-// // import Footer from './components/Footer';
-
-// function App() {
-//   return (
-//     <div className="min-h-screen bg-gray-50">
-//       <Navbar />
-//       <Hero />
-//       <CategoryGrid />
-//       <FeaturedProducts />
-//       {/* <TrendingProducts /> */}
-//       {/* <Banner /> */}
-//       {/* <Newsletter /> */}
-//       {/* <Footer /> */}
-//     </div>
-//   );
-// }
-
-// export default App;
-
-
 import { Routes, Route } from "react-router-dom";
-import Navbar from "./components/Nav";
 import Hero from "./components/Hero";
 import CategoryGrid from "./components/CategoryGrid";
 import FeaturedProducts from "./components/FeaturedProducts";
 import CategoryPage from "./pages/CategoryPage";
+import CartPage from "./pages/Cartpage";
+import CheckoutPage from "./pages/Checkoutpage";
+import Login from "./pages/LoginPage";
+import Register from "./pages/Register";
+import MainLayout from "./layout/Mainlayout";
+import AuthLayout from "./layout/Authlayout";
+import UserProfile from "./pages/Userpage";
 
 const Home = () => (
   <>
@@ -43,33 +21,32 @@ const Home = () => (
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
+    <Routes>
 
-      <Routes>
+      {/* Pages WITH navbar */}
+      <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/categories" element={<CategoryGrid />} />
+        <Route path="/featured" element={<FeaturedProducts />} />
+        <Route path="/category/:category" element={<CategoryPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/profile" element={<UserProfile />} />
+      </Route>
 
-        <Route
-          path="/categories"
-          element={<CategoryGrid />}
-        />
+      {/* Pages WITHOUT navbar */}
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+      </Route>
 
-        <Route
-          path="/featured"
-          element={<FeaturedProducts />}
-        />
-         <Route path="/category/:category" element={<CategoryPage />} />
+      {/* 404 */}
+      <Route
+        path="*"
+        element={<div className="p-20 text-center">404 – Page Not Found</div>}
+      />
 
-        {/* future */}
-        {/* <Route path="/category/:slug" element={<CategoryPage />} /> */}
-        {/* <Route path="/product/:id" element={<ProductPage />} /> */}
-
-        <Route
-          path="*"
-          element={<div className="p-20 text-center">404 – Page Not Found</div>}
-        />
-      </Routes>
-    </div>
+    </Routes>
   );
 }
 

@@ -124,7 +124,7 @@ const Navbar = () => {
           {/* Icons */}
           <div className="flex items-center space-x-6">
             <button className="relative hidden md:block">
-              <User size={24} className="text-gray-700 hover:text-blue-600" />
+              <a href='/profile'><User size={24} className="text-gray-700 hover:text-blue-600" /></a>
             </button>
             <button className="relative hidden md:block">
               <Heart size={24} className="text-gray-700 hover:text-red-600" />
@@ -133,7 +133,7 @@ const Navbar = () => {
               </span>
             </button>
             <button className="relative">
-              <ShoppingCart size={24} className="text-gray-700 hover:text-blue-600" />
+             <a href="/cart"> <ShoppingCart size={24} className="text-gray-700 hover:text-blue-600" /></a>
               <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 5
               </span>

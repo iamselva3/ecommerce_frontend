@@ -102,9 +102,30 @@ const UserProfile = () => {
     return <div className="p-20 text-center">User not found</div>;
   }
 
+  const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+
+  // optional but recommended: clear everything
+  // localStorage.clear();
+
+  navigate("/", { replace: true });
+};
+
+
   return (
     <div className="container mx-auto px-4 py-16 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+    
+<div className="flex items-center justify-between mb-8">
+  <h1 className="text-3xl font-bold">My Profile</h1>
+
+  <button
+    onClick={handleLogout}
+    className="text-sm bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+  >
+    Logout
+  </button>
+</div>
 
       <div className="bg-white rounded-xl shadow p-6 space-y-6">
 

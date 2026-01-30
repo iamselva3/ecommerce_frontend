@@ -19,14 +19,14 @@ const Login = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 👇 ONLY trigger state
+ 
   const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
     setShouldLogin(true);
   };
 
-  // 👇 Side-effects live here
+  
   useEffect(() => {
     if (!shouldLogin) return;
 
@@ -78,8 +78,15 @@ const Login = () => {
   }, [shouldLogin, form, navigate]);
 
   return (
+    <>
+    {/* <p className="text-sm text-center text-gray-600 flex justify-end">
+          <Link to="/" className="text-blue-600 hover:text-green-700">
+           Continue Without Login<p>👉</p> 
+          </Link>
+        </p> */}
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white p-8 rounded-xl shadow max-w-md w-full">
+
         <h1 className="text-2xl font-bold text-center mb-6">
           Login to your account
         </h1>
@@ -127,7 +134,10 @@ const Login = () => {
           </Link>
         </p>
       </div>
+      
     </div>
+    
+    </>
   );
 };
 

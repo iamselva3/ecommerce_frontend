@@ -65,16 +65,27 @@ const Navbar = () => {
         {/* Main Navbar */}
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
-          <div className="flex items-center">
+          <div className="flex-row items-center">
             <button 
               className="md:hidden mr-4"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <a href="/" className="text-2xl font-bold text-blue-600">
-              Style<span className="text-gray-800">Hub</span>
-            </a>
+           <a
+  href="/"
+  className="flex items-center gap-1 text-2xl font-bold text-blue-600"
+>
+  <img
+    src="/Logo.png"
+    alt="StyleHub Logo"
+    className="w-10 h-10 object-contain"
+  />
+  <span>
+    Style<span className="text-gray-800">Hub</span>
+  </span>
+</a>
+
           </div>
 
           {/* Categories Dropdown */}

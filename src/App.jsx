@@ -10,6 +10,20 @@ import Register from "./pages/Register";
 import MainLayout from "./layout/Mainlayout";
 import AuthLayout from "./layout/Authlayout";
 import UserProfile from "./pages/Userpage";
+import ShopPage from "./pages/ShopPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
+import DealsPage from "./pages/DealsPage";
+
+import AdminLayout from "./layout/AdminLayout";
+import AdminRoute from "./AdminRoutes";
+import AdminUpload from "./Admin/AdminUpload";
+import AdminFeatured from "./Admin/AdminFeatured";
+import AdminUsers from "./Admin/AdminUser";
+import AdminLogin from "./Admin/AdminLogin";
+import AdminProducts from "./Admin/AdminProducts";
+import AdminEditProduct from "./Admin/AdminEditProduct";
+import AdminDashboard from "./Admin/AdminDashboard";
 
 const Home = () => (
   <>
@@ -23,6 +37,8 @@ function App() {
   return (
     <Routes>
 
+   
+
       {/* Pages WITH navbar */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
@@ -31,6 +47,10 @@ function App() {
         <Route path="/category/:category" element={<CategoryPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/profile" element={<UserProfile />} />
+        <Route path="/shop" element={<ShopPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/deals" element={<DealsPage />} />
       </Route>
 
       {/* Pages WITHOUT navbar */}
@@ -40,7 +60,27 @@ function App() {
         <Route path="/checkout" element={<CheckoutPage />} />
       </Route>
 
-      {/* 404 */}
+      <Route path="/admin/login" element={<AdminLogin />} />
+
+    
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        }
+      >
+        {/* <Route path="dashboard" element={<div>Dashboard</div>} /> */}
+        <Route path="upload" element={<AdminUpload />} />
+        <Route path="featured" element={<AdminFeatured />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="products" element={<AdminProducts />} />
+<Route path="products/edit/:id" element={<AdminEditProduct />} />
+<Route path="dashboard" element={<AdminDashboard />} />
+      </Route>
+
+     
       <Route
         path="*"
         element={<div className="p-20 text-center">404 – Page Not Found</div>}

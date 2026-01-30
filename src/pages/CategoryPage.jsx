@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -10,6 +11,11 @@ const CategoryPage = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const scrollRef = useRef(null);
+
+  /* =========================
+     FETCH CATEGORY ITEMS
+  ========================= */
   useEffect(() => {
     const fetchCategoryItems = async () => {
       try {
@@ -18,14 +24,9 @@ const CategoryPage = () => {
         const res = await fetch(
           `${API_URL}/api/images/category/${category}`
         );
-
         const data = await res.json();
 
-        const images = Array.isArray(data?.data?.images)
-          ? data.data.images
-          : [];
-
-        setItems(images);
+        setItems(Array.isArray(data?.data?.images) ? data.data.images : []);
       } catch (err) {
         console.error(err);
         setItems([]);
@@ -37,140 +38,166 @@ const CategoryPage = () => {
     fetchCategoryItems();
   }, [category]);
 
-const handleAddToCart = async (item) => {
-  const token = localStorage.getItem("token");
+  /* =========================
+     SCROLL HANDLER
+  ========================= */
+  const scroll = (dir) => {
+    if (!scrollRef.current) return;
 
-  if (!token) {
-    navigate("/login");
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/api/cart`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // 🔥 THIS is mandatory
-      },
-      body: JSON.stringify({
-        productId: item._id,
-        name: item.name,
-        price: item.price,
-        size: item.size,
-        image: item.signedUrl || item.url,
-        qty: 1,
-      }),
+    scrollRef.current.scrollBy({
+      left: dir === "left" ? -320 : 320,
+      behavior: "smooth",
     });
-
-    if (!res.ok) {
-      throw new Error("Failed to add to cart");
-    }
-
-    const data = await res.json();
-    console.log("Added to cart:", data);
-    navigate("/cart");
-  } catch (err) {
-    console.error("Add to cart failed", err);
-    navigate("/login");
-  }
-};
-
-
-const handleBuyNow = async (item) => {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    navigate("/login");
-    return;
-  }
-
-  const payload = {
-    productId: item._id,
-    name: item.name,
-    price: item.price,
-    size: item.size,
-    image: item.signedUrl || item.url,
-    qty: 1,
   };
 
-  try {
-    const res = await fetch(`${API_URL}/api/cart`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      throw new Error("Buy now failed");
+  /* =========================
+     CART ACTIONS
+  ========================= */
+  const handleAddToCart = async (item) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
     }
 
-    navigate("/checkout");
-  } catch (err) {
-    console.error("Buy now error:", err);
-    alert("Please login to continue");
-    navigate("/login");
-  }
-};
+    try {
+      const res = await fetch(`${API_URL}/api/cart`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          productId: item._id,
+          name: item.name,
+          price: item.price,
+          size: item.size,
+          image: item.signedUrl || item.url,
+          qty: 1,
+        }),
+      });
 
+      if (!res.ok) throw new Error();
+      navigate("/cart");
+    } catch (err) {
+      console.error(err);
+      navigate("/login");
+    }
+  };
 
+  const handleBuyNow = async (item) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/cart`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          productId: item._id,
+          name: item.name,
+          price: item.price,
+          size: item.size,
+          image: item.signedUrl || item.url,
+          qty: 1,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+      navigate("/checkout");
+    } catch (err) {
+      console.error(err);
+      navigate("/login");
+    }
+  };
 
   if (loading) {
-    return <div className="p-20 text-center">Loading {category}...</div>;
+    return (
+      <div className="p-20 text-center">
+        Loading {category}...
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto px-4 py-16">
-      <h1 className="text-3xl font-bold mb-8 capitalize">
+      <h1 className="text-3xl font-bold mb-8 capitalize pl-14">
         {category}
       </h1>
 
       {items.length === 0 ? (
         <p>No items found in this category.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {items.map((item) => (
-            <div
-              key={item._id}
-              className="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col"
-            >
-              <img
-                src={item.signedUrl || item.url}
-                alt={item.name}
-                className="w-full h-56 object-cover rounded-lg mb-3"
-              />
+        <div className="relative">
+          {/* LEFT ARROW */}
+          <button
+            onClick={() => scroll("left")}
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow rounded-full p-2"
+          >
+            <ChevronLeft />
+          </button>
 
-              <h3 className="font-semibold text-gray-900">
-                {item.name}
-              </h3>
+          {/* RIGHT ARROW */}
+          <button
+            onClick={() => scroll("right")}
+            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow rounded-full p-2"
+          >
+            <ChevronRight />
+          </button>
 
-              <p className="text-sm text-gray-500 capitalize">
-                Size: {item.size}
-              </p>
+          {/* PRODUCTS */}
+          <div
+            ref={scrollRef}
+            className="flex gap-6 overflow-x-auto scroll-smooth scrollbar-hide px-14"
+          >
+            {items.map((item) => (
+              <div
+                key={item._id}
+                className="min-w-[240px] bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col"
+              >
+                <img
+                  src={item.signedUrl || item.url}
+                  alt={item.name}
+                  className="w-full h-56 object-cover rounded-lg mb-3 cursor-pointer"
+                  onClick={() => navigate(`/product/${item._id}`)}
+                />
 
-              <p className="text-lg font-bold text-gray-900 mt-1">
-                ₹{item.price}
-              </p>
+                <h3 className="font-semibold truncate">
+                  {item.name}
+                </h3>
 
-              <div className="mt-auto flex gap-2 pt-4">
-                <button
-                  onClick={() => handleAddToCart(item)}
-                  className="flex-1 border border-gray-800 text-gray-800 py-2 rounded-lg hover:bg-gray-800 hover:text-white transition"
-                >
-                  Add to Cart
-                </button>
+                <p className="text-sm text-gray-500">
+                  Size: {item.size}
+                </p>
 
-                <button
-                  onClick={() => handleBuyNow(item)}
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-                >
-                  Buy Now
-                </button>
+                <p className="text-lg font-bold mt-1">
+                  ₹{item.price}
+                </p>
+
+                <div className="mt-auto flex gap-2 pt-4">
+                  <button
+                    onClick={() => handleAddToCart(item)}
+                    className="flex-1 border py-2 rounded-lg hover:bg-black hover:text-white transition"
+                  >
+                    Add to Cart
+                  </button>
+
+                  <button
+                    onClick={() => handleBuyNow(item)}
+                    className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                  >
+                    Buy Now
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -93,38 +93,26 @@ const DealsPage = () => {
   /* -----------------------------
      Buy Now
   ----------------------------- */
-  const handleBuyNow = async (item) => {
-    if (!token) {
-      toast.info("Please login to continue");
-      navigate("/login");
-      return;
+ const handleBuyNow = async (item) => {
+  if (!token) {
+    toast.info("Please login to continue");
+    navigate("/login");
+    return;
+  }
+
+  // Navigate directly with product data
+  navigate("/checkout", {
+    state: {
+      directProduct: {
+        productId: item._id,
+        name: item.name,
+        price: item.price,
+        image: item.signedUrl || item.url,
+        qty: 1
+      }
     }
-
-    try {
-      const res = await fetch(`${API_URL}/api/cart`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          productId: item._id,
-          name: item.name,
-          price: item.price,
-          size: item.size,
-          image: item.signedUrl || item.url,
-          qty: 1,
-        }),
-      });
-
-      if (!res.ok) throw new Error();
-
-      toast.success("Proceeding to checkout");
-      navigate("/checkout");
-    } catch (err) {
-      toast.error("Something went wrong");
-    }
-  };
+  });
+};
 
   if (loading) {
     return <div className="p-20 text-center">Loading deals...</div>;

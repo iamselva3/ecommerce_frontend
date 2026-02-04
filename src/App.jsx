@@ -24,6 +24,10 @@ import AdminLogin from "./Admin/AdminLogin";
 import AdminProducts from "./Admin/AdminProducts";
 import AdminEditProduct from "./Admin/AdminEditProduct";
 import AdminDashboard from "./Admin/AdminDashboard";
+import HelpCenter from "./pages/Helpcentre";
+import ProductPage from "./pages/ProductPage";
+import PaymentPage from "./pages/PaymentPage";
+import OrderConfirmation from "./pages/OrderConfirmation";
 
 const Home = () => (
   <>
@@ -51,6 +55,10 @@ function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/deals" element={<DealsPage />} />
+        <Route path="/help" element={<HelpCenter />} />
+        <Route path="/product/:id" element={<ProductPage />} />
+          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
       </Route>
 
       {/* Pages WITHOUT navbar */}

@@ -16,7 +16,6 @@ const ShopPage = () => {
   const token = localStorage.getItem("token");
 
 
-  console.log("ryugrgyurfe",productsByCategory)
   
   useEffect(() => {
     const fetchCategories = async () => {
@@ -117,6 +116,7 @@ const ShopPage = () => {
           productId: item._id,
           name: item.name,
           price: item.price,
+          sizes: item.sizes,
           image: item.signedUrl || item.url,
           qty: 1,
         }),
@@ -131,36 +131,26 @@ const ShopPage = () => {
     }
   };
 
-  const handleBuyNow = async (item) => {
-    if (!token) {
-      toast.info("Please login to continue");
-      navigate("/login");
-      return;
+ const handleBuyNow = async (item) => {
+  if (!token) {
+    toast.info("Please login to continue");
+    navigate("/login");
+    return;
+  }
+
+  // Navigate directly with product data
+  navigate("/checkout", {
+    state: {
+      directProduct: {
+        productId: item._id,
+        name: item.name,
+        price: item.price,
+        image: item.signedUrl || item.url,
+        qty: 1
+      }
     }
-
-    try {
-      const res = await fetch(`${API_URL}/api/cart`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          productId: item._id,
-          name: item.name,
-          price: item.price,
-          image: item.signedUrl || item.url,
-          qty: 1,
-        }),
-      });
-
-      if (!res.ok) throw new Error();
-
-      navigate("/checkout");
-    } catch {
-      toast.error("Something went wrong");
-    }
-  };
+  });
+};
 
   if (loading) {
     return <div className="p-20 text-center">Loading shop...</div>;

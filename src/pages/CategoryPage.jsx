@@ -13,9 +13,7 @@ const CategoryPage = () => {
 
   const scrollRef = useRef(null);
 
-  /* =========================
-     FETCH CATEGORY ITEMS
-  ========================= */
+  
   useEffect(() => {
     const fetchCategoryItems = async () => {
       try {
@@ -38,9 +36,6 @@ const CategoryPage = () => {
     fetchCategoryItems();
   }, [category]);
 
-  /* =========================
-     SCROLL HANDLER
-  ========================= */
   const scroll = (dir) => {
     if (!scrollRef.current) return;
 
@@ -50,9 +45,7 @@ const CategoryPage = () => {
     });
   };
 
-  /* =========================
-     CART ACTIONS
-  ========================= */
+ 
   const handleAddToCart = async (item) => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -71,7 +64,7 @@ const CategoryPage = () => {
           productId: item._id,
           name: item.name,
           price: item.price,
-          size: item.size,
+          sizes: item.sizes,
           image: item.signedUrl || item.url,
           qty: 1,
         }),
@@ -103,7 +96,7 @@ const CategoryPage = () => {
           productId: item._id,
           name: item.name,
           price: item.price,
-          size: item.size,
+          sizes: item.sizes,
           image: item.signedUrl || item.url,
           qty: 1,
         }),
@@ -135,7 +128,6 @@ const CategoryPage = () => {
         <p>No items found in this category.</p>
       ) : (
         <div className="relative">
-          {/* LEFT ARROW */}
           <button
             onClick={() => scroll("left")}
             className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow rounded-full p-2"
@@ -143,7 +135,6 @@ const CategoryPage = () => {
             <ChevronLeft />
           </button>
 
-          {/* RIGHT ARROW */}
           <button
             onClick={() => scroll("right")}
             className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow rounded-full p-2"
@@ -151,7 +142,6 @@ const CategoryPage = () => {
             <ChevronRight />
           </button>
 
-          {/* PRODUCTS */}
           <div
             ref={scrollRef}
             className="flex gap-6 overflow-x-auto scroll-smooth scrollbar-hide px-14"
@@ -173,7 +163,7 @@ const CategoryPage = () => {
                 </h3>
 
                 <p className="text-sm text-gray-500">
-                  Size: {item.size}
+                  Size: {item.sizes?.join(", ").toUpperCase()}
                 </p>
 
                 <p className="text-lg font-bold mt-1">

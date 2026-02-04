@@ -6,7 +6,6 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const FeaturedProducts = () => {
   const [products, setProducts] = useState([]);
-  console.log("products",products);
   const [loading, setLoading] = useState(true);
 
 useEffect(() => {
@@ -62,7 +61,7 @@ const isNewProduct = (createdAt) => {
     return <div className="text-center py-20">Loading featured products…</div>;
   }
 
- // In your FeaturedProducts component
+
 return (
   <section className="py-16 bg-gray-50">
     <div className="container mx-auto px-4">

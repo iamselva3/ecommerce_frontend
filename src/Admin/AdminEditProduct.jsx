@@ -12,7 +12,7 @@ const AdminEditProduct = () => {
   const [form, setForm] = useState({
     name: "",
     price: "",
-    size: "",
+    sizes: [],
     category: "",
     isFeatured: false,
   });
@@ -23,18 +23,18 @@ const AdminEditProduct = () => {
       const res = await fetch(`${API_URL}/api/images/${id}`);
       const result = await res.json();
 
-      // ✅ CORRECT extraction
+     
       const image = result?.data?.image;
 
       if (!image) {
         throw new Error("Product not found");
       }
 
-      // ✅ Auto-fill form
+      
       setForm({
         name: image.name || "",
         price: image.price || "",
-        size: image.size || "",
+        sizes: image.sizes || [],
         category: image.category || "",
         isFeatured: image.isFeatured || false,
       });
@@ -99,13 +99,33 @@ const AdminEditProduct = () => {
           className="w-full border p-2 rounded"
         />
 
-        <input
-          name="size"
-          value={form.size}
-          onChange={handleChange}
-          placeholder="Size (S, M, L, XL)"
-          className="w-full border p-2 rounded"
-        />
+        <div>
+  <p className="font-semibold mb-2">Available Sizes</p>
+  <div className="flex gap-3 flex-wrap">
+    {["s", "m", "l", "xl", "xxl"].map((s) => (
+      <button
+        type="button"
+        key={s}
+        onClick={() =>
+          setForm((prev) => ({
+            ...prev,
+            sizes: prev.sizes.includes(s)
+              ? prev.sizes.filter((x) => x !== s)
+              : [...prev.sizes, s],
+          }))
+        }
+        className={`px-3 py-1 border rounded uppercase ${
+          form.sizes.includes(s)
+            ? "bg-black text-white"
+            : "bg-white"
+        }`}
+      >
+        {s}
+      </button>
+    ))}
+  </div>
+</div>
+
 
         <input
           name="category"

@@ -28,6 +28,9 @@ import HelpCenter from "./pages/Helpcentre";
 import ProductPage from "./pages/ProductPage";
 import PaymentPage from "./pages/PaymentPage";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import OrderTrackingPage from "./pages/OrderTrackingPage";
+import OrdersListPage from "./pages/OrderListPage";
+import WishlistPage from "./pages/WishlistPage";
 
 const Home = () => (
   <>
@@ -59,6 +62,9 @@ function App() {
         <Route path="/product/:id" element={<ProductPage />} />
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route path="/track-order/:orderId" element={<OrderTrackingPage />} />
+          <Route path="/orders" element={<OrdersListPage />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
       </Route>
 
       {/* Pages WITHOUT navbar */}

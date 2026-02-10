@@ -8,6 +8,7 @@ const CategoryPage = () => {
   const { category } = useParams();
   const navigate = useNavigate();
 
+   const token = localStorage.getItem("token");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,37 +79,26 @@ const CategoryPage = () => {
     }
   };
 
-  const handleBuyNow = async (item) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
+ const handleBuyNow = async (item) => {
+  if (!token) {
+    toast.info("Please login to continue");
+    navigate("/login");
+    return;
+  }
 
-    try {
-      const res = await fetch(`${API_URL}/api/cart`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          productId: item._id,
-          name: item.name,
-          price: item.price,
-          sizes: item.sizes,
-          image: item.signedUrl || item.url,
-          qty: 1,
-        }),
-      });
-
-      if (!res.ok) throw new Error();
-      navigate("/checkout");
-    } catch (err) {
-      console.error(err);
-      navigate("/login");
+  // Navigate directly with product data
+  navigate("/checkout", {
+    state: {
+      directProduct: {
+        productId: item._id,
+        name: item.name,
+        price: item.price,
+        image: item.signedUrl || item.url,
+        qty: 1
+      }
     }
-  };
+  });
+};
 
   if (loading) {
     return (

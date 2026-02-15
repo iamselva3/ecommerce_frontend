@@ -53,7 +53,7 @@ const ProductCard = ({ product }) => {
         name: product.name,
         price: product.price,
         sizes: [selectedSize.toLowerCase()], 
-        image: item?.images?.[0]?.url || item.url,
+        image: product?.images?.[0]?.url || product.url,
         // image:product.images,
         qty: 1,
       }),

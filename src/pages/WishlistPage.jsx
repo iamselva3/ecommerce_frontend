@@ -13,6 +13,8 @@ import {
   Package,
   Search,
   Filter,
+  Ruler,
+  Layers,
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -23,18 +25,17 @@ const WishlistPage = () => {
   const [filteredItems, setFilteredItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-
-  // Categories for filtering
-  const categories = [
+  const [categories, setCategories] = useState([
     { id: "all", name: "All Items", count: 0 },
     { id: "shirts", name: "Shirts", count: 0 },
     { id: "pants", name: "Pants", count: 0 },
     { id: "tshirts", name: "T-Shirts", count: 0 },
     { id: "jackets", name: "Jackets", count: 0 },
     { id: "accessories", name: "Accessories", count: 0 },
-  ];
+  ]);
+
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     if (!token) {
@@ -54,13 +55,27 @@ const WishlistPage = () => {
       const res = await fetch(`${API_URL}/api/wishlist`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
-        const items = data.data?.wishlist || data.data || [];
-        setWishlist(items);
-        updateCategoryCounts(items);
+        // Extract product items from wishlist
+        const wishlistData = data.data?.items || [];
+        
+        // Transform to get product details
+        const items = wishlistData.map(item => ({
+          ...item.product,
+          wishlistItemId: item._id,
+          addedAt: item.addedAt
+        }));
+
+        // Remove duplicates (temporary fix until backend is updated)
+        const uniqueItems = items.filter((item, index, self) =>
+          index === self.findIndex(t => t._id === item._id)
+        );
+
+        setWishlist(uniqueItems);
+        updateCategoryCounts(uniqueItems);
       } else {
         toast.error(data.message || "Failed to load wishlist");
       }
@@ -73,29 +88,30 @@ const WishlistPage = () => {
   };
 
   const updateCategoryCounts = (items) => {
+    const itemsArray = Array.isArray(items) ? items : [];
     const newCategories = [...categories];
-    
+
     // Reset counts
     newCategories.forEach(cat => cat.count = 0);
-    
+
     // Count items per category
-    items.forEach(item => {
+    itemsArray.forEach(item => {
       const itemCategory = item.category?.toLowerCase() || "all";
       newCategories.forEach(cat => {
         if (cat.id === "all") {
-          cat.count = items.length;
+          cat.count = itemsArray.length;
         } else if (cat.id === itemCategory) {
           cat.count++;
         }
       });
     });
-    
-    // Update categories with counts
+
     setCategories(newCategories);
   };
 
   const filterWishlistItems = () => {
-    let filtered = [...wishlist];
+    const wishlistArray = Array.isArray(wishlist) ? wishlist : [];
+    let filtered = [...wishlistArray];
 
     // Filter by search query
     if (searchQuery.trim()) {
@@ -121,11 +137,11 @@ const WishlistPage = () => {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
-        setWishlist(prev => prev.filter(item => item.productId !== productId));
+        setWishlist(prev => prev.filter(item => item._id !== productId));
         toast.success("Removed from wishlist");
       } else {
         toast.error(data.message || "Failed to remove item");
@@ -145,17 +161,18 @@ const WishlistPage = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          productId: item.productId || item._id,
+          productId: item._id,
           quantity: 1,
+          size: item.sizes?.[0] || "M", // Default to first size
         }),
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         toast.success("Added to cart!");
         // Optionally remove from wishlist after adding to cart
-        removeFromWishlist(item.productId || item._id);
+        // removeFromWishlist(item._id);
       } else {
         toast.error(data.message || "Failed to add to cart");
       }
@@ -179,15 +196,15 @@ const WishlistPage = () => {
 
   const clearWishlist = async () => {
     if (!window.confirm("Are you sure you want to clear your entire wishlist?")) return;
-    
+
     try {
       const res = await fetch(`${API_URL}/api/wishlist/clear`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         setWishlist([]);
         toast.success("Wishlist cleared");
@@ -227,7 +244,7 @@ const WishlistPage = () => {
             <ChevronRight size={16} className="mx-2" />
             <span className="text-gray-900 font-medium">My Wishlist</span>
           </div>
-          
+
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">My Wishlist</h1>
@@ -235,7 +252,7 @@ const WishlistPage = () => {
                 {wishlist.length} {wishlist.length === 1 ? 'item' : 'items'} saved for later
               </p>
             </div>
-            
+
             <div className="flex gap-3">
               {wishlist.length > 0 && (
                 <>
@@ -276,7 +293,7 @@ const WishlistPage = () => {
                   <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
                 </div>
               </div>
-              
+
               {/* Category Filter */}
               <div className="md:w-64">
                 <div className="relative">
@@ -345,7 +362,7 @@ const WishlistPage = () => {
                 </div>
                 <div className="text-center p-3">
                   <div className="text-2xl font-bold text-green-600">
-                    {filteredItems.filter(item => item.inStock).length}
+                    {filteredItems.filter(item => item.inStock !== false).length}
                   </div>
                   <div className="text-sm text-gray-600">In Stock</div>
                 </div>
@@ -367,21 +384,21 @@ const WishlistPage = () => {
             {/* Wishlist Items */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredItems.map((item) => (
-                <div key={item._id || item.productId} className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300">
+                <div key={item._id} className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300">
                   {/* Product Image */}
                   <div className="relative overflow-hidden rounded-t-xl">
                     <img
-                      src={item.image || item.url || "https://via.placeholder.com/300x300"}
+                      src={item.images?.[0]?.url || item.image || item.url || "https://via.placeholder.com/300x300"}
                       alt={item.name}
                       className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         e.target.src = "https://via.placeholder.com/300x300";
                       }}
                     />
-                    
+
                     {/* Badges */}
-                    <div className="absolute top-3 left-3">
-                      {item.inStock ? (
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      {item.inStock !== false ? (
                         <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
                           In Stock
                         </span>
@@ -390,28 +407,33 @@ const WishlistPage = () => {
                           Out of Stock
                         </span>
                       )}
+                      {item.isFeatured && (
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">
+                          Featured
+                        </span>
+                      )}
                     </div>
-                    
+
                     {/* Action Buttons */}
                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-y-2">
                       <button
-                        onClick={() => navigateToProduct(item.productId || item._id)}
+                        onClick={() => navigateToProduct(item._id)}
                         className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
                         title="View Product"
                       >
                         <Eye size={18} />
                       </button>
                       <button
-                        onClick={() => removeFromWishlist(item.productId || item._id)}
+                        onClick={() => removeFromWishlist(item._id)}
                         className="p-2 bg-white rounded-full shadow-md hover:bg-red-100 text-red-500"
                         title="Remove from wishlist"
                       >
                         <Trash2 size={18} />
                       </button>
                     </div>
-                    
+
                     {/* Quick Add to Cart */}
-                    {item.inStock && (
+                    {item.inStock !== false && (
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <button
                           onClick={() => addToCart(item)}
@@ -422,23 +444,77 @@ const WishlistPage = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Product Details */}
                   <div className="p-4">
+                    {/* Category */}
                     <div className="mb-2">
                       <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
                         {item.category || "General"}
                       </span>
                     </div>
-                    
-                    <h3 className="font-semibold text-gray-900 mb-1 line-clamp-1">
+
+                    {/* Product Name */}
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">
                       {item.name}
                     </h3>
-                    
+
+                    {/* Description */}
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                       {item.description || "No description available"}
                     </p>
-                    
+
+                    {/* Sizes Section */}
+                    {item.sizes && item.sizes.length > 0 && (
+                      <div className="mb-3">
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                          <Ruler size={14} />
+                          <span>Available Sizes:</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {item.sizes.slice(0, 4).map((size, index) => (
+                            <span
+                              key={index}
+                              className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded border border-gray-200"
+                            >
+                              {size.toUpperCase()}
+                            </span>
+                          ))}
+                          {item.sizes.length > 4 && (
+                            <span className="px-2 py-1 text-xs text-gray-500">
+                              +{item.sizes.length - 4} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Colors Section */}
+                    {item.colors && item.colors.length > 0 && (
+                      <div className="mb-3">
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                          <Layers size={14} />
+                          <span>Colors:</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {item.colors.slice(0, 3).map((color, index) => (
+                            <div
+                              key={index}
+                              className="w-5 h-5 rounded-full border border-gray-300"
+                              style={{ backgroundColor: color }}
+                              title={color}
+                            />
+                          ))}
+                          {item.colors.length > 3 && (
+                            <span className="text-xs text-gray-500">
+                              +{item.colors.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Price */}
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <span className="text-lg font-bold text-gray-900">
@@ -450,56 +526,65 @@ const WishlistPage = () => {
                           </span>
                         )}
                       </div>
-                      
+
                       {item.discount && (
                         <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded">
                           {item.discount}% OFF
                         </span>
                       )}
                     </div>
-                    
+
                     {/* Rating */}
-                    <div className="flex items-center mb-4">
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            size={14}
-                            className={`${
-                              i < (item.rating || 0)
-                                ? "text-yellow-400 fill-yellow-400"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
+                    {item.rating && (
+                      <div className="flex items-center mb-4">
+                        <div className="flex">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              size={14}
+                              className={`${
+                                i < Math.floor(item.rating)
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-sm text-gray-600 ml-2">
+                          ({item.reviewCount || 0})
+                        </span>
                       </div>
-                      <span className="text-sm text-gray-600 ml-2">
-                        ({item.reviewCount || 0})
-                      </span>
-                    </div>
-                    
+                    )}
+
                     {/* Action Buttons */}
                     <div className="flex gap-2">
                       <button
                         onClick={() => addToCart(item)}
-                        disabled={!item.inStock}
+                        disabled={item.inStock === false}
                         className={`flex-1 py-2 rounded-lg font-medium text-center transition-colors
-                          ${item.inStock
+                          ${item.inStock !== false
                             ? "bg-black text-white hover:bg-gray-800"
                             : "bg-gray-200 text-gray-500 cursor-not-allowed"
                           }`}
                       >
-                        {item.inStock ? "Add to Cart" : "Out of Stock"}
+                        {item.inStock !== false ? "Add to Cart" : "Out of Stock"}
                       </button>
-                      
+
                       <button
-                        onClick={() => removeFromWishlist(item.productId || item._id)}
+                        onClick={() => removeFromWishlist(item._id)}
                         className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
                         title="Remove"
                       >
                         <Trash2 size={18} />
                       </button>
                     </div>
+
+                    {/* Added Date */}
+                    {item.addedAt && (
+                      <p className="text-xs text-gray-400 mt-2">
+                        Added {new Date(item.addedAt).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}

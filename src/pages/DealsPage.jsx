@@ -146,7 +146,7 @@ const DealsPage = () => {
               </span>
 
               <img
-                src={item.signedUrl || item.url}
+                src={item.images?.[0]?.url || item.url}
                 alt={item.name}
                 className="w-full h-56 object-cover rounded-t-xl cursor-pointer"
                 onClick={() => navigate(`/product/${item._id}`)}

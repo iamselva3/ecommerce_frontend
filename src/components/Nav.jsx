@@ -362,7 +362,7 @@ const navigateToProduct = (productId) => {
         className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors active:bg-gray-200 select-none"
       >
                                 <img
-                                  src={product.signedUrl || product.url}
+                                  src={product.images?.[0]?.url || product.url}
                                   alt={product.name}
                                   className="w-10 h-10 object-cover rounded"
                                   onError={(e) => {

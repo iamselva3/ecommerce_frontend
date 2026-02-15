@@ -8,6 +8,8 @@ const FeaturedProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  console.log("dsfrsfdtyw",products)
+
 useEffect(() => {
   const fetchFeatured = async () => {
     try {
@@ -20,7 +22,7 @@ useEffect(() => {
           id: item._id,
           name: item.name,
           category: item.category,
-          image: item.url,
+          images: item?.images?.[0]?.url ||item.url,
           price: item.price || 0, 
           originalPrice: 69.99,
           rating: 4.7,

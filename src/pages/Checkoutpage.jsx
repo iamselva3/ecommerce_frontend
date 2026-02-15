@@ -106,7 +106,7 @@ const CheckoutPage = () => {
     } else {
       // Update quantity via API
       try {
-        const res = await fetch(`${API_URL}/api/cart/update`, {
+        const res = await fetch(`${API_URL}/api/cart`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -121,7 +121,7 @@ const CheckoutPage = () => {
         if (res.ok) {
           const updatedCart = await res.json();
           setCart(updatedCart.data || updatedCart);
-          toast.success("Quantity updated");
+          // toast.success("Quantity updated");
         }
       } catch (error) {
         toast.error("Failed to update quantity");

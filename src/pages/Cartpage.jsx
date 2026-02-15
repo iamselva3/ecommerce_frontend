@@ -41,6 +41,7 @@ const CartPage = () => {
         if (!cartData.items) {
           cartData.items = [];
         }
+        console.log("sdisduiuds",cartData)
         
         setCart(cartData);
       } catch (err) {

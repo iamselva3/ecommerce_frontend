@@ -53,7 +53,8 @@ const ProductCard = ({ product }) => {
         name: product.name,
         price: product.price,
         sizes: [selectedSize.toLowerCase()], 
-        image: product.image || product.url,
+        image: item?.images?.[0]?.url || item.url,
+        // image:product.images,
         qty: 1,
       }),
     });
@@ -113,7 +114,8 @@ const ProductCard = ({ product }) => {
       
       <div className="relative overflow-hidden bg-gray-100">
         <img
-          src={product.image || product.url}
+          // src={product?.images?.[0]?.url || product.url}
+          src={product.images || "No image to preview"}
           alt={product.name}
           className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-500"
         />

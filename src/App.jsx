@@ -31,6 +31,7 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderTrackingPage from "./pages/OrderTrackingPage";
 import OrdersListPage from "./pages/OrderListPage";
 import WishlistPage from "./pages/WishlistPage";
+import SearchResultsPage from "./pages/SearchResultPage";
 
 const Home = () => (
   <>
@@ -65,6 +66,7 @@ function App() {
           <Route path="/track-order/:orderId" element={<OrderTrackingPage />} />
           <Route path="/orders" element={<OrdersListPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/search" element={<SearchResultsPage />} />
       </Route>
 
       {/* Pages WITHOUT navbar */}

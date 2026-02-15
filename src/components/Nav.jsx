@@ -136,13 +136,14 @@ const Navbar = () => {
   };
 
   // Handle search submit
-  const handleSearchSubmit = () => {
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setShowSuggestions(false);
-      setSearchQuery('');
-    }
-  };
+ const handleSearchSubmit = () => {
+  if (searchQuery.trim()) {
+    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    setShowSuggestions(false);
+    setSearchQuery('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
 
   // Handle key press
   const handleKeyPress = (e) => {
@@ -152,11 +153,36 @@ const Navbar = () => {
   };
 
   // Navigate to product
-  const navigateToProduct = (productId) => {
-    navigate(`/product/${productId}`);
+ // Navigate to product
+const navigateToProduct = (productId) => {
+  console.log('Attempting to navigate to product:', productId);
+  console.log('Product ID type:', typeof productId);
+  console.log('Product ID length:', productId?.length);
+  
+  // Validate productId
+  if (!productId || productId === 'undefined' || productId === 'null') {
+    console.error('Invalid product ID:', productId);
+    toast.error('Invalid product');
+    return;
+  }
+  
+  // Trim and validate
+  const cleanProductId = productId.trim();
+  if (!cleanProductId || cleanProductId.length < 10) {
+    console.error('Product ID too short:', cleanProductId);
+    return;
+  }
+  
+  try {
+    console.log('Navigating to:', `/product/${cleanProductId}`);
+    navigate(`/product/${cleanProductId}`);
     setShowSuggestions(false);
     setSearchQuery('');
-  };
+  } catch (error) {
+    console.error('Navigation error:', error);
+    toast.error('Failed to navigate to product');
+  }
+};
 
   // Clear recent searches
   const clearRecentSearches = () => {
@@ -320,11 +346,21 @@ const Navbar = () => {
                         ) : (
                           <div className="space-y-2">
                             {searchResults.map((product) => (
-                              <div
-                                key={product._id}
-                                onClick={() => navigateToProduct(product._id)}
-                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                              >
+                                    <div
+        key={product._id}
+        onMouseDown={(e) => {
+          e.preventDefault(); 
+          e.stopPropagation();
+          console.log('Mouse down on product:', product._id);
+          navigateToProduct(product._id);
+        }}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          console.log('Touch start on product:', product._id);
+          navigateToProduct(product._id);
+        }}
+        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors active:bg-gray-200 select-none"
+      >
                                 <img
                                   src={product.signedUrl || product.url}
                                   alt={product.name}

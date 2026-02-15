@@ -66,7 +66,9 @@ const CategoryPage = () => {
           name: item.name,
           price: item.price,
           sizes: item.sizes,
-          image: item.signedUrl || item.url,
+          // image: item.signedUrl || item.url,
+           image: item?.images?.[0]?.url || item.url,
+
           qty: 1,
         }),
       });
@@ -93,7 +95,8 @@ const CategoryPage = () => {
         productId: item._id,
         name: item.name,
         price: item.price,
-        image: item.signedUrl || item.url,
+        // image: item.signedUrl || item.url,
+        image: item?.images?.[0]?.url || item.url,
         qty: 1
       }
     }
@@ -142,7 +145,7 @@ const CategoryPage = () => {
                 className="min-w-[240px] bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col"
               >
                 <img
-                  src={item.signedUrl || item.url}
+                  src={item?.images?.[0]?.url || item?.images?.[0]?.url}
                   alt={item.name}
                   className="w-full h-56 object-cover rounded-lg mb-3 cursor-pointer"
                   onClick={() => navigate(`/product/${item._id}`)}

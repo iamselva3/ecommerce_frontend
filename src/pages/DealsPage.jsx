@@ -76,7 +76,8 @@ const DealsPage = () => {
           name: item.name,
           price: item.price,
           size: item.size,
-          image: item.signedUrl || item.url,
+          // image: item.signedUrl || item.url,
+           image: item.images?.[0]?.url || item.url,
           qty: 1,
         }),
       });
@@ -90,9 +91,7 @@ const DealsPage = () => {
     }
   };
 
-  /* -----------------------------
-     Buy Now
-  ----------------------------- */
+  
  const handleBuyNow = async (item) => {
   if (!token) {
     toast.info("Please login to continue");
@@ -107,7 +106,8 @@ const DealsPage = () => {
         productId: item._id,
         name: item.name,
         price: item.price,
-        image: item.signedUrl || item.url,
+        // image: item.signedUrl || item.url,
+        image: item?.images?.[0]?.url || item.url,
         qty: 1
       }
     }

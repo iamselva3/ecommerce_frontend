@@ -117,7 +117,8 @@ const ShopPage = () => {
           name: item.name,
           price: item.price,
           sizes: item.sizes,
-          image: item.signedUrl || item.url,
+          // image: item.signedUrl || item.url,
+           image: item.images?.[0]?.url || item.url,
           qty: 1,
         }),
       });
@@ -145,7 +146,8 @@ const ShopPage = () => {
         productId: item._id,
         name: item.name,
         price: item.price,
-        image: item.signedUrl || item.url,
+        // image: item.signedUrl || item.url,
+        image: item?.images?.[0]?.url || item.url,
         qty: 1
       }
     }
@@ -193,7 +195,7 @@ const ShopPage = () => {
                     className="min-w-[220px] bg-white rounded-xl shadow hover:shadow-lg transition flex flex-col"
                   >
                     <img
-                      src={item.signedUrl || item.url}
+                      src={item?.images?.[0]?.url || item.url}
                       alt={item.name}
                       className="w-full h-56 object-cover rounded-t-xl cursor-pointer"
                       onClick={() => navigate(`/product/${item._id}`)}

@@ -152,47 +152,109 @@ const WishlistPage = () => {
     }
   };
 
-  const addToCart = async (item) => {
-    try {
-      const res = await fetch(`${API_URL}/api/cart`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          productId: item._id,
-          quantity: 1,
-          size: item.sizes?.[0] || "M", // Default to first size
-        }),
-      });
+  //new
+  
+const addToCart = async (item) => {
+  console.log("sdgvdsgv", item);
+  
+  if (!token) {
+    toast.info("Please login to continue");
+    navigate("/login");
+    return;
+  }
 
-      const data = await res.json();
-
-      if (data.success) {
-        toast.success("Added to cart!");
-        // Optionally remove from wishlist after adding to cart
-        // removeFromWishlist(item._id);
-      } else {
-        toast.error(data.message || "Failed to add to cart");
-      }
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-      toast.error("Failed to add to cart");
+  try {
+    // Get sizes from multiple possible locations
+    let itemSizes = [];
+    
+    if (item.sizes && item.sizes.length > 0) {
+      itemSizes = item.sizes;
+    } else if (item.product && item.product.sizes) {
+      itemSizes = item.product.sizes;
+    } else {
+      itemSizes = ["m"]; // Default fallback
     }
-  };
+    
+    const normalizedSizes = itemSizes.map(size => size.toLowerCase());
+
+    const res = await fetch(`${API_URL}/api/cart`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        productId: item._id,
+        name: item.name,
+        price: item.price,
+        sizes: normalizedSizes,
+        image: item.images?.[0]?.url || item.url || item.image,
+        qty: 1,
+      }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      console.error("Cart API error:", errorData);
+      throw new Error();
+    }
+
+    toast.success("Added to cart");
+  } catch (error) {
+    console.error("Error adding to cart:", error);
+    toast.error("Failed to add to cart");
+  }
+};
+
 
   const moveAllToCart = async () => {
-    try {
-      const promises = filteredItems.map(item =>
-        addToCart(item)
-      );
-      await Promise.all(promises);
-      toast.success("All items moved to cart");
-    } catch (error) {
-      toast.error("Failed to move all items to cart");
+  try {
+    // Show loading toast
+    const loadingToast = toast.loading("Moving items to cart...");
+    
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const item of filteredItems) {
+      try {
+        const res = await fetch(`${API_URL}/api/cart`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            productId: item._id,
+            name: item.name,
+            price: item.price,
+            sizes: item.sizes || ["M"],
+            image: item.images?.[0]?.url || item.url || item.image,
+            qty: 1,
+          }),
+        });
+
+        if (res.ok) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch {
+        failCount++;
+      }
     }
-  };
+
+    toast.dismiss(loadingToast);
+    
+    if (successCount > 0) {
+      toast.success(`${successCount} item${successCount > 1 ? 's' : ''} added to cart`);
+    }
+    if (failCount > 0) {
+      toast.error(`Failed to add ${failCount} item${failCount > 1 ? 's' : ''}`);
+    }
+  } catch (error) {
+    toast.error("Failed to move all items to cart");
+  }
+};
 
   const clearWishlist = async () => {
     if (!window.confirm("Are you sure you want to clear your entire wishlist?")) return;
@@ -433,7 +495,7 @@ const WishlistPage = () => {
                     </div>
 
                     {/* Quick Add to Cart */}
-                    {item.inStock !== false && (
+                    {/* {item.inStock !== false && (
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <button
                           onClick={() => addToCart(item)}
@@ -442,7 +504,7 @@ const WishlistPage = () => {
                           Add to Cart
                         </button>
                       </div>
-                    )}
+                    )} */}
                   </div>
 
                   {/* Product Details */}

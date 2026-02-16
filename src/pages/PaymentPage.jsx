@@ -26,13 +26,14 @@ const PaymentPage = () => {
   const [upiId, setUpiId] = useState("");
   const [selectedUpiApp, setSelectedUpiApp] = useState("");
   
-  const upiApps = [
-    { id: "gpay", name: "Google Pay", icon: "📱" },
-    { id: "phonepe", name: "PhonePe", icon: "💳" },
-    { id: "paytm", name: "Paytm", icon: "🏦" },
-    { id: "bhim", name: "BHIM UPI", icon: "🇮🇳" },
-    { id: "other", name: "Other UPI Apps", icon: "🔗" },
-  ];
+const upiApps = [
+  { id: "gpay", name: "Google Pay", icon: "/upi/gpay.svg" },
+  { id: "phonepe", name: "PhonePe", icon: "/upi/phonepe.svg" },
+  { id: "paytm", name: "Paytm", icon: "/upi/paytm.svg" },
+  { id: "bhim", name: "BHIM UPI", icon: "/upi/bhim.svg" },
+  // { id: "other", name: "Other UPI Apps", icon: "/upi/upi.svg" },
+];
+
 
   if (!orderData) {
     navigate("/checkout");
@@ -322,23 +323,28 @@ const PaymentPage = () => {
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Select UPI App
           </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {upiApps.map((app) => (
-              <button
-                key={app.id}
-                onClick={() => setSelectedUpiApp(app.id)}
-                className={`p-4 border rounded-lg flex flex-col items-center justify-center transition-all
-                  ${selectedUpiApp === app.id 
-                    ? "border-green-500 bg-green-50" 
-                    : "border-gray-300 hover:border-gray-400"
-                  }
-                `}
-              >
-                <span className="text-2xl mb-2">{app.icon}</span>
-                <span className="text-sm font-medium">{app.name}</span>
-              </button>
-            ))}
-          </div>
+         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+  {upiApps.map((app) => (
+    <button
+      key={app.id}
+      onClick={() => setSelectedUpiApp(app.id)}
+      className={`p-4 border rounded-lg flex flex-col items-center justify-center transition-all
+        ${selectedUpiApp === app.id 
+          ? "border-green-500 bg-green-50" 
+          : "border-gray-300 hover:border-gray-400"
+        }
+      `}
+    >
+      <img
+        src={app.icon}
+        alt={app.name}
+        className="w-10 h-10 object-contain mb-2"
+      />
+      <span className="text-sm font-medium">{app.name}</span>
+    </button>
+  ))}
+</div>
+
         </div>
         
         <div>

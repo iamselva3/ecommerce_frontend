@@ -236,7 +236,7 @@ const ProductPage = () => {
 
       if (res.ok) {
         setIsWishlisted(!isWishlisted);
-        toast.success(isWishlisted ? "Removed from wishlist" : "Added to wishlist");
+        // toast.success(isWishlisted ? "Removed from wishlist" : "Added to wishlist");
       }
     } catch (err) {
       toast.error("Failed to update wishlist");

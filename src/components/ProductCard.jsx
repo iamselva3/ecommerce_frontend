@@ -73,7 +73,7 @@ const ProductCard = ({ product }) => {
   const handleQuickView = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/product/${product._id}`);
+      navigate(`/product/${product._id || product.id}`);
   };
 
   return (

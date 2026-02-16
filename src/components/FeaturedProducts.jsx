@@ -8,14 +8,12 @@ const FeaturedProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  console.log("dsfrsfdtyw",products)
-
 useEffect(() => {
   const fetchFeatured = async () => {
     try {
       const res = await fetch(`${API_URL}/api/images/featured/images`);
       const result = await res.json(); 
-      console.log("API Response:", result);
+
 
       if (result.success && result.data && result.data.images) {
         const mapped = result.data.images.map((item) => ({

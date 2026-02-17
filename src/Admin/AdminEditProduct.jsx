@@ -6,6 +6,7 @@ import {
   Plus, X, Star, Package, Tag, DollarSign, Layers,
   Edit, Camera, RefreshCw
 } from "lucide-react";
+import LogoLoader from "../components/LogoLoader";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -282,8 +283,10 @@ const AdminEditProduct = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading product details...</p>
+          {/* <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div> */}
+          <p className="mt-4 text-gray-600">
+            <LogoLoader />
+          </p>
         </div>
       </div>
     );

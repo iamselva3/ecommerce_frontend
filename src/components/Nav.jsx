@@ -204,8 +204,8 @@ const navigateToProduct = (productId) => {
   }, []);
 
   return (
-    <nav className="sticky top-0 z-50 bg-white shadow-md">
-      <div className="container mx-auto px-4">
+    <nav className="sticky top-0 z-50 bg-white shadow-md  pb-1 md:pb-0">
+      <div className="w-full px-6 xl:px-16">
         {/* Top Bar */}
         <div className="hidden md:flex justify-between items-center py-2 border-b text-sm">
           <div className="flex items-center space-x-4">

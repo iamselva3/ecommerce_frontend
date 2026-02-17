@@ -6,6 +6,7 @@ import {
   ChevronLeft, ChevronRight, X, Star,
   Package, Tag, Calendar, Eye, Loader
 } from "lucide-react";
+import LogoLoader from "../components/LogoLoader";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -361,7 +362,10 @@ const AdminProducts = () => {
       {/* Products Grid */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <Loader size={40} className="animate-spin text-blue-600" />
+          {/* <Loader size={40} className="animate-spin text-blue-600" /> */}
+          <p className="mt-4 text-gray-600">
+            <LogoLoader />
+          </p>
         </div>
       ) : (
         <>

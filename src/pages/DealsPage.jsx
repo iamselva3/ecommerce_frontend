@@ -75,12 +75,13 @@ const DealsPage = () => {
           productId: item._id,
           name: item.name,
           price: item.price,
-          size: item.size,
+          size: item.sizes,
           // image: item.signedUrl || item.url,
            image: item.images?.[0]?.url || item.url,
           qty: 1,
         }),
       });
+      
 
       if (!res.ok) throw new Error();
 
@@ -157,9 +158,10 @@ const DealsPage = () => {
                   {item.name}
                 </h3>
 
-                <p className="text-sm text-gray-500 capitalize">
-                  Size: {item.size}
-                </p>
+              <p className="text-sm text-gray-500 capitalize">
+ Available Size: {item.sizes?.join(", ")}
+</p>
+
 
                 <p className="font-bold mt-1 text-red-600">
                   ₹{item.price}

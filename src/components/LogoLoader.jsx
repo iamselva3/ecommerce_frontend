@@ -1,4 +1,4 @@
-import "./LogoLoader.css";
+import "./Logoloader.css";
 
 export default function LogoLoader() {
   return (

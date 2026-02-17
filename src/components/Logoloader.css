@@ -1,0 +1,56 @@
+/* LogoLoader.css */
+
+.loader-container {
+    height: 100vh;
+    width: 100%;
+    /* background: #000; */
+    background-color: white;
+    /* black background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo-loader {
+    width: 140px;
+    animation: float 2.5s ease-in-out infinite,
+        glow 2s ease-in-out infinite alternate,
+        rotate 6s linear infinite;
+}
+
+/* Floating effect */
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-20px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+/* Glow effect */
+@keyframes glow {
+    from {
+        filter: drop-shadow(0 0 5px #ff00ff) drop-shadow(0 0 10px #00ffff);
+    }
+
+    to {
+        filter: drop-shadow(0 0 20px #ff00ff) drop-shadow(0 0 30px #00ffff);
+    }
+}
+
+/* Slow rotate */
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

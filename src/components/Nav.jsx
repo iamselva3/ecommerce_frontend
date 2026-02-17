@@ -240,7 +240,7 @@ const navigateToProduct = (productId) => {
                 className="w-10 h-10 object-contain"
               />
               <span>
-                Style<span className="text-gray-800">Hub</span>
+                Namma<span className="text-gray-800">Cart</span>
               </span>
             </a>
           </div>

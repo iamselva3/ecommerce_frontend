@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import LogoLoader from "./LogoLoader";
 
 
 const CategoryGrid = () => {
@@ -28,7 +29,9 @@ const CategoryGrid = () => {
   }, []);
 
   if (loading) {
-    return <div className="text-center py-20">Loading categories...</div>;
+    return <div className="text-center py-20">
+      <LogoLoader />
+    </div>;
   }
 
   return (

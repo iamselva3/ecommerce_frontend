@@ -7,6 +7,7 @@ import {
   CreditCard, Calendar, Truck, Star, Camera, Check,
   Home, Briefcase, Smartphone, Plus, ChevronRight
 } from "lucide-react";
+import LogoLoader from "../components/LogoLoader";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -425,7 +426,8 @@ const UserProfile = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading your profile...</p>
+          {/* <p className="mt-4 text-gray-600">Loading your profile...</p> */}
+          <LogoLoader />
         </div>
       </div>
     );

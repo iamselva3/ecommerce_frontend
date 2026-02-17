@@ -16,6 +16,7 @@ import {
   Ruler,
   Layers,
 } from "lucide-react";
+import LogoLoader from "../components/LogoLoader";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -288,7 +289,9 @@ const addToCart = async (item) => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-600"></div>
-          <p className="mt-4 text-gray-600">Loading your wishlist...</p>
+          <p className="mt-4 text-gray-600">
+            <LogoLoader />
+          </p>
         </div>
       </div>
     );

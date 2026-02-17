@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import LogoLoader from "../components/LogoLoader";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -155,7 +156,9 @@ const ShopPage = () => {
 };
 
   if (loading) {
-    return <div className="p-20 text-center">Loading shop...</div>;
+    return <div className="p-20 text-center">
+      <LogoLoader />
+    </div>;
   }
 
 

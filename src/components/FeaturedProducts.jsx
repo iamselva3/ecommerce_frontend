@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Star, Heart, ShoppingBag, Eye } from "lucide-react";
 import ProductCard from "./ProductCard";
+import LogoLoader from "./LogoLoader";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -58,7 +59,9 @@ const isNewProduct = (createdAt) => {
 };
 
   if (loading) {
-    return <div className="text-center py-20">Loading featured products…</div>;
+    return <div className="text-center py-20">
+      <LogoLoader />
+    </div>;
   }
 
 

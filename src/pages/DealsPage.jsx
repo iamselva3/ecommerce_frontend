@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import LogoLoader from "../components/LogoLoader";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -116,7 +117,9 @@ const DealsPage = () => {
 };
 
   if (loading) {
-    return <div className="p-20 text-center">Loading deals...</div>;
+    return <div className="p-20 text-center">
+      <LogoLoader />
+    </div>;
   }
 
   return (

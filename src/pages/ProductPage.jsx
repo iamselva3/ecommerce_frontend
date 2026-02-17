@@ -8,6 +8,7 @@ import {
   Calendar, Tag, Hash, Image as ImageIcon,
   ThumbsUp, Edit2, Trash2, Filter, ChevronDown, X
 } from "lucide-react";
+import LogoLoader from "../components/LogoLoader";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -396,8 +397,9 @@ console.log("Token from localStorage:", token);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading product details...</p>
+          {/* <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div> */}
+          {/* <p className="mt-4 text-gray-600">Loading product details...</p> */}
+          <LogoLoader />
         </div>
       </div>
     );

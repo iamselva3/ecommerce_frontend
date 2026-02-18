@@ -249,7 +249,7 @@ const ProductPage = () => {
     if (navigator.share) {
       navigator.share({
         title: product.name,
-        text: `Check out ${product.name} on StyleHub`,
+        text: `Check out ${product.name} on Nammacart`,
         url: window.location.href,
       });
     } else {

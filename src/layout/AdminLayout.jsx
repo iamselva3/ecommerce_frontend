@@ -2,7 +2,9 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, Upload, Star, Users, Package,
   LogOut, Settings, ChevronDown, Menu, X,
-  Home, Bell, Search, UserCircle
+  Home, Bell, Search, UserCircle,
+  Package2,
+  ShoppingCart
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
@@ -64,6 +66,12 @@ const AdminLayout = () => {
       icon: <Users size={20} />, 
       label: "Users",
       description: "Manage customers"
+    },
+     { 
+      to: "/admin/orders", 
+      icon: <ShoppingCart size={20} />, 
+      label: "Orders",
+      description: "Manage orders"
     },
   ];
 
@@ -139,7 +147,7 @@ const AdminLayout = () => {
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-800">
           {isSidebarOpen ? (
             <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              StyleHub Admin
+              NammaCart Admin
             </h2>
           ) : (
             <h2 className="text-xl font-bold mx-auto">S</h2>
@@ -163,7 +171,7 @@ const AdminLayout = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{user.name || 'Admin User'}</p>
-                <p className="text-xs text-gray-400 truncate">{user.email || 'admin@stylehub.com'}</p>
+                <p className="text-xs text-gray-400 truncate">{user.email || 'admin@nammacart.com'}</p>
               </div>
             </div>
           </div>

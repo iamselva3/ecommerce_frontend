@@ -84,7 +84,7 @@ const HelpCenter = () => {
             <Mail className="text-black" />
             <div>
               <p className="font-medium">Email Support</p>
-              <p className="text-sm text-gray-600">support@stylehub.com</p>
+              <p className="text-sm text-gray-600">support@nammacart.com</p>
             </div>
           </div>
 

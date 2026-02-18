@@ -9,6 +9,7 @@ const OrdersListPage = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  console.log("dusdgy",orders)
 
   useEffect(() => {
     if (!token) {
@@ -99,17 +100,16 @@ const OrdersListPage = () => {
                         <p className="text-gray-600 text-sm">Total Amount</p>
                         <p className="text-xl font-bold">₹{order.totalAmount.toLocaleString()}</p>
                       </div>
-                      <button
-                        onClick={() => {
-                          // Remove # for URL, add back when needed
-                          const urlOrderId = order.orderId.replace('#', '');
-                          navigate(`/track-order/${urlOrderId}`);
-                        }}
-                        className="flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Track Order
-                      </button>
+               <button
+  onClick={() => {
+    
+    navigate(`/track-order/${order._id}`);
+  }}
+  className="flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+>
+  <Eye className="h-4 w-4 mr-2" />
+  Track Order
+</button>
                     </div>
                   </div>
                   

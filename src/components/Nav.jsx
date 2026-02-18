@@ -236,7 +236,7 @@ const navigateToProduct = (productId) => {
             <a href="/" className="flex items-center gap-1 text-2xl font-bold text-blue-600">
               <img
                 src="/Logo.png"
-                alt="StyleHub Logo"
+                alt="Nammcart Logo"
                 className="w-10 h-10 object-contain"
               />
               <span>

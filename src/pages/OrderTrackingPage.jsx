@@ -18,6 +18,7 @@ import {
   Download,
   Share2,
   MessageSquare,
+  XCircle, 
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -30,7 +31,7 @@ const OrderTrackingPage = () => {
   const [updating, setUpdating] = useState(false);
   const token = localStorage.getItem("token");
 
-  const fullOrderId = orderId ? `#${orderId}` : null
+  const fullOrderId = orderId ? `${orderId}` : null
 
   // Fetch order details
   useEffect(() => {
@@ -160,87 +161,181 @@ const fetchOrderDetails = async () => {
   };
 
   // Timeline steps based on order status
-  const getTimelineSteps = () => {
-    if (!order) return [];
-    
-    const steps = [
-      {
-        id: "ordered",
-        title: "Order Placed",
-        description: "Your order has been confirmed",
-        icon: Package,
-        status: "completed",
-        date: order?.createdAt,
-      },
-      {
-        id: "processing",
-        title: "Processing",
-        description: "Preparing your order for shipment",
-        icon: RefreshCw,
-        status: order?.orderStatus === "pending" ? "current" : 
-                ["shipped", "completed", "failed", "refunded"].includes(order?.orderStatus) ? "completed" : "pending",
-      },
-      {
-        id: "shipped",
-        title: "Shipped",
-        description: "Your order is on the way",
-        icon: Truck,
-        status: order?.orderStatus === "shipped" ? "current" : 
-                ["completed", "failed", "refunded"].includes(order?.orderStatus) ? "completed" : "pending",
-        date: order?.tracking?.shippedAt || null,
-      },
-      {
-        id: "delivered",
-        title: "Delivered",
-        description: "Order delivered successfully",
-        icon: CheckCircle,
-        status: order?.orderStatus === "completed" ? "completed" : 
-                ["failed", "refunded"].includes(order?.orderStatus) ? "failed" : "pending",
-        date: order?.tracking?.deliveredAt || null,
-      },
-    ];
+ // Timeline steps based on order status
+const getTimelineSteps = () => {
+  if (!order) return [];
+  
+  const steps = [
+    {
+      id: "ordered",
+      title: "Order Placed",
+      description: "Your order has been confirmed",
+      icon: Package,
+      status: "completed",
+      date: order?.createdAt,
+    },
+    {
+      id: "confirmed",
+      title: "Confirmed",
+      description: "Order has been confirmed and is being processed",
+      icon: CheckCircle,
+      status: getStepStatus(['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'returned', 'refunded']),
+      date: order?.orderTimeline?.find(t => t.status === 'confirmed')?.timestamp,
+    },
+    {
+      id: "processing",
+      title: "Processing",
+      description: "Preparing your order for shipment",
+      icon: RefreshCw,
+      status: getStepStatus(['processing', 'shipped', 'out_for_delivery', 'delivered']),
+      date: order?.orderTimeline?.find(t => t.status === 'processing')?.timestamp,
+    },
+    {
+      id: "shipped",
+      title: "Shipped",
+      description: "Your order is on the way",
+      icon: Truck,
+      status: getStepStatus(['shipped', 'out_for_delivery', 'delivered']),
+      date: order?.tracking?.shippedAt || order?.orderTimeline?.find(t => t.status === 'shipped')?.timestamp,
+    },
+    {
+      id: "out_for_delivery",
+      title: "Out for Delivery",
+      description: "Your order is out for delivery",
+      icon: Truck,
+      status: getStepStatus(['out_for_delivery', 'delivered']),
+      date: order?.orderTimeline?.find(t => t.status === 'out_for_delivery')?.timestamp,
+    },
+  ];
 
-    if (order?.orderStatus === "failed") {
-      steps[steps.length - 1] = {
-        id: "failed",
-        title: "Delivery Failed",
-        description: "Could not deliver your order",
-        icon: AlertCircle,
-        status: "failed",
-      };
-    } else if (order?.orderStatus === "refunded") {
-      steps[steps.length - 1] = {
-        id: "refunded",
-        title: "Refunded",
-        description: "Order has been refunded",
-        icon: DollarSign,
-        status: "completed",
-      };
-    }
-
+  // Handle cancelled orders
+  if (order?.orderStatus === "cancelled") {
+    steps.push({
+      id: "cancelled",
+      title: "Cancelled",
+      description: "Order has been cancelled",
+      icon: XCircle,
+      status: "failed",
+      date: order?.orderTimeline?.find(t => t.status === 'cancelled')?.timestamp,
+    });
     return steps;
-  };
+  }
+
+  // Handle returned orders
+  if (order?.orderStatus === "returned") {
+    steps.push({
+      id: "delivered",
+      title: "Delivered",
+      description: "Order was delivered",
+      icon: CheckCircle,
+      status: "completed",
+      date: order?.tracking?.deliveredAt || order?.orderTimeline?.find(t => t.status === 'delivered')?.timestamp,
+    });
+    steps.push({
+      id: "returned",
+      title: "Returned",
+      description: "Order has been returned",
+      icon: RefreshCw,
+      status: "failed",
+      date: order?.orderTimeline?.find(t => t.status === 'returned')?.timestamp,
+    });
+    return steps;
+  }
+
+  // Handle refunded orders
+  if (order?.orderStatus === "refunded") {
+    steps.push({
+      id: "delivered",
+      title: "Delivered",
+      description: "Order was delivered",
+      icon: CheckCircle,
+      status: "completed",
+      date: order?.tracking?.deliveredAt || order?.orderTimeline?.find(t => t.status === 'delivered')?.timestamp,
+    });
+    steps.push({
+      id: "refunded",
+      title: "Refunded",
+      description: "Amount has been refunded",
+      icon: DollarSign,
+      status: "completed",
+      date: order?.orderTimeline?.find(t => t.status === 'refunded')?.timestamp,
+    });
+    return steps;
+  }
+
+  // Handle delivered orders
+  if (order?.orderStatus === "delivered") {
+    steps.push({
+      id: "delivered",
+      title: "Delivered",
+      description: "Order delivered successfully",
+      icon: CheckCircle,
+      status: "completed",
+      date: order?.tracking?.deliveredAt || order?.orderTimeline?.find(t => t.status === 'delivered')?.timestamp,
+    });
+    return steps;
+  }
+
+  // For in-progress orders, add the current status indicator
+  const currentStep = steps.find(step => step.status === "current");
+  if (!currentStep) {
+    // Add a visual indicator for the current status
+    const statusMap = {
+      'confirmed': 'confirmed',
+      'processing': 'processing',
+      'shipped': 'shipped',
+      'out_for_delivery': 'out_for_delivery'
+    };
+    
+    const currentStatus = statusMap[order?.orderStatus];
+    if (currentStatus) {
+      const step = steps.find(s => s.id === currentStatus);
+      if (step) step.status = "current";
+    }
+  }
+
+  return steps;
+};
+
+// Helper function to determine step status
+const getStepStatus = (validStatuses) => {
+  if (!order?.orderStatus) return "pending";
+  
+  if (validStatuses.includes(order.orderStatus)) {
+    return order.orderStatus === validStatuses[0] ? "current" : "completed";
+  }
+  
+  // Check if this step should be completed based on timeline
+  const stepCompleted = order.orderTimeline?.some(t => validStatuses.includes(t.status));
+  return stepCompleted ? "completed" : "pending";
+};
 
   // Status badges with colors
   const getStatusBadge = (status) => {
-    const statusConfig = {
-      pending: { color: "bg-yellow-100 text-yellow-800", icon: Clock },
-      shipped: { color: "bg-blue-100 text-blue-800", icon: Truck },
-      completed: { color: "bg-green-100 text-green-800", icon: CheckCircle },
-      failed: { color: "bg-red-100 text-red-800", icon: AlertCircle },
-      refunded: { color: "bg-purple-100 text-purple-800", icon: DollarSign },
-    };
-
-    const config = statusConfig[status] || statusConfig.pending;
-    const Icon = config.icon;
-
-    return (
-      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
-        <Icon className="h-4 w-4 mr-2" />
-        {status?.charAt(0).toUpperCase() + status?.slice(1) || "Unknown"}
-      </span>
-    );
+  const statusConfig = {
+    pending: { color: "bg-yellow-100 text-yellow-800", icon: Clock },
+    confirmed: { color: "bg-blue-100 text-blue-800", icon: CheckCircle },
+    processing: { color: "bg-purple-100 text-purple-800", icon: RefreshCw },
+    shipped: { color: "bg-indigo-100 text-indigo-800", icon: Truck },
+    out_for_delivery: { color: "bg-orange-100 text-orange-800", icon: Truck },
+    delivered: { color: "bg-green-100 text-green-800", icon: CheckCircle },
+    cancelled: { color: "bg-red-100 text-red-800", icon: XCircle },
+    returned: { color: "bg-gray-100 text-gray-800", icon: RefreshCw },
+    refunded: { color: "bg-purple-100 text-purple-800", icon: DollarSign },
+    failed: { color: "bg-red-100 text-red-800", icon: AlertCircle },
   };
+
+  const config = statusConfig[status] || statusConfig.pending;
+  const Icon = config.icon;
+
+  return (
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
+      <Icon className="h-4 w-4 mr-2" />
+      {status === 'out_for_delivery' ? 'Out for Delivery' : 
+       status?.charAt(0).toUpperCase() + status?.slice(1) || "Unknown"}
+    </span>
+  );
+};
 
   const refreshTracking = async () => {
     setUpdating(true);

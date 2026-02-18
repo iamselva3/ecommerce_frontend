@@ -14,7 +14,6 @@ import ShopPage from "./pages/ShopPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import DealsPage from "./pages/DealsPage";
-
 import AdminLayout from "./layout/AdminLayout";
 import AdminRoute from "./AdminRoutes";
 import AdminUpload from "./Admin/AdminUpload";
@@ -32,6 +31,8 @@ import OrderTrackingPage from "./pages/OrderTrackingPage";
 import OrdersListPage from "./pages/OrderListPage";
 import WishlistPage from "./pages/WishlistPage";
 import SearchResultsPage from "./pages/SearchResultPage";
+import AdminOrders from "./Admin/AdminOrders";
+import AdminOrderDetail from "./Admin/AdminOrderDetail";
 
 const Home = () => (
   <>
@@ -92,7 +93,9 @@ function App() {
         <Route path="featured" element={<AdminFeatured />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="products" element={<AdminProducts />} />
+        <Route path="orders" element={<AdminOrders />} />
 <Route path="products/edit/:id" element={<AdminEditProduct />} />
+<Route path="orders/:orderId" element={<AdminOrderDetail />} />
 <Route path="dashboard" element={<AdminDashboard />} />
       </Route>
 

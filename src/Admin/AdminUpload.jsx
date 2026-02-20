@@ -24,9 +24,7 @@ const AdminUpload = () => {
 
   const [imagePreviews, setImagePreviews] = useState([]);
 
-  /* =======================
-     HANDLERS
-  ======================== */
+ 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
@@ -92,10 +90,7 @@ const AdminUpload = () => {
     setImagePreviews([]);
   };
 
-  /* =======================
-     SUBMIT
-  ======================== */
- // In AdminUpload.jsx - handleSubmit function
+ 
 const handleSubmit = async (e) => {
   e.preventDefault();
 
@@ -110,11 +105,13 @@ const handleSubmit = async (e) => {
     return toast.error("Select at least one size");
   }
 
+  // Normalize category
+  const category = form.category.toLowerCase().trim();
+
   const formData = new FormData();
   
-  // CHANGE THIS: Use "image" not "images"
-  form.images.forEach((images) => {
-    formData.append("images", images); // ← Changed from "images" to "image"
+  form.images.forEach((image) => {
+    formData.append("images", image);
   });
   
   const metadata = {
@@ -131,7 +128,7 @@ const handleSubmit = async (e) => {
 
   try {
     const res = await fetch(
-      `${API_URL}/api/images/upload-multiple/${form.category}`,
+      `${API_URL}/api/images/upload-multiple/${category}`, // use normalized category
       {
         method: "POST",
         headers: {
@@ -170,9 +167,8 @@ const handleSubmit = async (e) => {
   }
 };
 
-  /* =======================
-     UI
-  ======================== */
+
+  
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Upload Product</h1>

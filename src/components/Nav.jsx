@@ -524,6 +524,31 @@ const navigateToProduct = (productId) => {
                   {link.name}
                 </a>
               ))}
+
+              <div className="flex items-center space-x-4 py-2 px-3 border-t border-b">
+        <a 
+          href="/profile" 
+          className="flex items-center gap-2 text-gray-700 hover:text-blue-600"
+          onClick={() => setIsMenuOpen(false)}
+        >
+          <User size={20} />
+          <span>Profile</span>
+        </a>
+        <a 
+          href="/wishlist" 
+          className="flex items-center gap-2 text-gray-700 hover:text-red-600"
+          onClick={() => setIsMenuOpen(false)}
+        >
+          <Heart size={20} />
+          <span>Wishlist</span>
+          {wishlistCount > 0 && (
+            <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              {wishlistCount > 9 ? '9+' : wishlistCount}
+            </span>
+          )}
+        </a>
+      </div>
+      
               <div className="pt-4 border-t">
                 <h3 className="font-bold mb-2">Categories</h3>
                 <div className="grid grid-cols-2 gap-2">

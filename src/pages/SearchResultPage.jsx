@@ -14,6 +14,8 @@ const SearchResultsPage = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [wishlistStatus, setWishlistStatus] = useState({});
+  const [wishlistLoading, setWishlistLoading] = useState({});
   
   // Filter states
   const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
@@ -22,6 +24,8 @@ const SearchResultsPage = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [categories, setCategories] = useState([]);
   
+  const token = localStorage.getItem("token");
+
   // Fetch search results
   useEffect(() => {
     if (!query) {
@@ -49,6 +53,11 @@ const SearchResultsPage = () => {
         const uniqueCategories = [...new Set(productsData.map(p => p.category).filter(Boolean))];
         setCategories(uniqueCategories);
         
+        // After products are loaded, check wishlist status for each
+        if (token && productsData.length > 0) {
+          checkWishlistStatusForProducts(productsData);
+        }
+        
       } catch (err) {
         console.error('Search error:', err);
         setError(err.message);
@@ -60,6 +69,37 @@ const SearchResultsPage = () => {
 
     fetchSearchResults();
   }, [query]);
+
+  // Check wishlist status for all products
+  const checkWishlistStatusForProducts = async (productsList) => {
+    try {
+      const statusMap = {};
+      
+      // Check each product individually (or you could create a batch endpoint)
+      await Promise.all(
+        productsList.map(async (product) => {
+          try {
+            const response = await fetch(`${API_URL}/api/wishlist/check/${product._id}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              statusMap[product._id] = data.isWishlisted || false;
+            }
+          } catch (error) {
+            console.error(`Error checking wishlist for product ${product._id}:`, error);
+          }
+        })
+      );
+      
+      setWishlistStatus(statusMap);
+    } catch (error) {
+      console.error("Error checking wishlist statuses:", error);
+    }
+  };
 
   // Apply filters
   useEffect(() => {
@@ -103,32 +143,46 @@ const SearchResultsPage = () => {
     navigate(`/product/${productId}`);
   };
 
-  const handleAddToWishlist = async (productId) => {
+  const handleWishlistToggle = async (productId) => {
     const token = localStorage.getItem('token');
     if (!token) {
-      toast.error('Please login to add to wishlist');
+      toast.error('Please login to manage wishlist');
       navigate('/login');
       return;
     }
 
+    // Set loading state for this specific product
+    setWishlistLoading(prev => ({ ...prev, [productId]: true }));
+
     try {
-      const response = await fetch(`${API_URL}/api/wishlist/add`, {
-        method: 'POST',
+      const isWishlisted = wishlistStatus[productId];
+      const method = isWishlisted ? 'DELETE' : 'POST';
+      
+      const response = await fetch(`${API_URL}/api/wishlist/${productId}`, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ productId }),
       });
 
       if (response.ok) {
-        toast.success('Added to wishlist!');
+        // Update the wishlist status for this product
+        setWishlistStatus(prev => ({
+          ...prev,
+          [productId]: !isWishlisted
+        }));
+        
+        // toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist!');
       } else {
-        toast.error('Failed to add to wishlist');
+        const error = await response.json();
+        toast.error(error.message || `Failed to ${isWishlisted ? 'remove from' : 'add to'} wishlist`);
       }
     } catch (error) {
       console.error('Wishlist error:', error);
       toast.error('Something went wrong');
+    } finally {
+      setWishlistLoading(prev => ({ ...prev, [productId]: false }));
     }
   };
 
@@ -300,8 +354,8 @@ const SearchResultsPage = () => {
                   </div>
                   <input
                     type="range"
-                    min={priceStats.min}
-                    max={priceStats.max}
+                    min={priceStats.min || 0}
+                    max={priceStats.max || 10000}
                     value={priceRange.max}
                     onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) }))}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
@@ -412,170 +466,173 @@ const SearchResultsPage = () => {
                 {/* Products Display */}
                 {viewMode === 'grid' ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredProducts.map((product) => (
-                      <div
-                        key={product._id}
-                        className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
-                      >
-                        <div className="relative">
-                          <img
-                            src={product.signedUrl || product.url}
-                            alt={product.name}
-                            className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              e.target.src = 'https://via.placeholder.com/300x300?text=No+Image';
-                            }}
-                          />
-                          <button
-                            onClick={() => handleAddToWishlist(product._id)}
-                            className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white"
-                          >
-                            <Heart size={20} className="text-gray-600" />
-                          </button>
-                          {product.price && (
-                            <div className="absolute top-3 left-3">
-                              <span className="px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full">
-                                ₹{product.price}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="p-4">
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-gray-900 line-clamp-1">
-                                {product.name}
-                              </h3>
-                              <p className="text-sm text-gray-600 mt-1 line-clamp-2 min-h-[40px]">
-                                {product.description || 'No description available'}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between mt-4">
-                            <div className="flex items-center gap-2">
-                              {product.category && (
-                                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                                  {product.category}
-                                </span>
-                              )}
-                              {product.rating && (
-                                <div className="flex items-center gap-1">
-                                  <Star size={12} className="text-yellow-400 fill-current" />
-                                  <span className="text-xs text-gray-600">{product.rating}</span>
-                                </div>
-                              )}
-                            </div>
-                            
-                            <button
-                              onClick={() => navigateToProduct(product._id)}
-                              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                            >
-                              View Details
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  // List View
-                  <div className="space-y-4">
-                    {filteredProducts.map((product) => (
-                      <div
-                        key={product._id}
-                        className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-                      >
-                        <div className="flex flex-col md:flex-row">
-                          <div className="md:w-1/4">
+                    {filteredProducts.map((product) => {
+                      const isWishlisted = wishlistStatus[product._id] || false;
+                      const isLoading = wishlistLoading[product._id] || false;
+                      
+                      return (
+                        <div
+                          key={product._id}
+                          className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
+                        >
+                          <div className="relative">
                             <img
-                              src={product.signedUrl || product.url}
+                              src={product.images?.[0]?.url || product.url}
                               alt={product.name}
-                              className="w-full h-48 md:h-full object-cover"
+                              className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                               onError={(e) => {
                                 e.target.src = 'https://via.placeholder.com/300x300?text=No+Image';
                               }}
                             />
+                            <button
+                              onClick={() => handleWishlistToggle(product._id)}
+                              disabled={isLoading}
+                              className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all disabled:opacity-50"
+                            >
+                              <Heart 
+                                size={20} 
+                                className={`transition-colors ${
+                                  isWishlisted 
+                                    ? "fill-red-500 text-red-500" 
+                                    : "text-gray-600"
+                                } ${isLoading ? "animate-pulse" : ""}`} 
+                              />
+                            </button>
+                            {product.price && (
+                              <div className="absolute top-3 left-3">
+                                <span className="px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full">
+                                  ₹{product.price}
+                                </span>
+                              </div>
+                            )}
                           </div>
                           
-                          <div className="flex-1 p-6">
-                            <div className="flex justify-between items-start mb-4">
+                          <div className="p-4">
+                            <div className="flex items-start justify-between mb-2">
                               <div className="flex-1">
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                <h3 className="font-semibold text-gray-900 line-clamp-1">
                                   {product.name}
                                 </h3>
-                                <p className="text-gray-600 mb-4 line-clamp-2">
+                                <p className="text-sm text-gray-600 mt-1 line-clamp-2 min-h-[40px]">
                                   {product.description || 'No description available'}
                                 </p>
                               </div>
-                              
-                              <div className="flex flex-col items-end gap-2">
-                                {product.price && (
-                                  <span className="text-2xl font-bold text-blue-600">
-                                    ₹{product.price}
-                                  </span>
-                                )}
-                                <button
-                                  onClick={() => handleAddToWishlist(product._id)}
-                                  className="p-2 hover:bg-gray-100 rounded-full"
-                                >
-                                  <Heart size={20} className="text-gray-600" />
-                                </button>
-                              </div>
                             </div>
                             
-                            <div className="flex flex-wrap items-center justify-between gap-4">
-                              <div className="flex items-center gap-4">
+                            <div className="flex items-center justify-between mt-4">
+                              <div className="flex items-center gap-2">
                                 {product.category && (
-                                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                                  <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
                                     {product.category}
                                   </span>
                                 )}
                                 {product.rating && (
                                   <div className="flex items-center gap-1">
-                                    <Star size={14} className="text-yellow-400 fill-current" />
-                                    <span className="text-sm text-gray-600">{product.rating}</span>
+                                    <Star size={12} className="text-yellow-400 fill-current" />
+                                    <span className="text-xs text-gray-600">{product.rating}</span>
                                   </div>
                                 )}
                               </div>
                               
-                              <div className="flex items-center gap-3">
-                                <button
-                                  onClick={() => navigateToProduct(product._id)}
-                                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-                                >
-                                  View Product
-                                </button>
+                              <button
+                                onClick={() => navigateToProduct(product._id)}
+                                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                              >
+                                View Details
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  // List View
+                  <div className="space-y-4">
+                    {filteredProducts.map((product) => {
+                      const isWishlisted = wishlistStatus[product._id] || false;
+                      const isLoading = wishlistLoading[product._id] || false;
+                      
+                      return (
+                        <div
+                          key={product._id}
+                          className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                        >
+                          <div className="flex flex-col md:flex-row">
+                            <div className="md:w-1/4">
+                              <img
+                                src={product.images?.[0]?.url || product.url}
+                                alt={product.name}
+                                className="w-full h-48 md:h-full object-cover"
+                                onError={(e) => {
+                                  e.target.src = 'https://via.placeholder.com/300x300?text=No+Image';
+                                }}
+                              />
+                            </div>
+                            
+                            <div className="flex-1 p-6">
+                              <div className="flex justify-between items-start mb-4">
+                                <div className="flex-1">
+                                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                    {product.name}
+                                  </h3>
+                                  <p className="text-gray-600 mb-4 line-clamp-2">
+                                    {product.description || 'No description available'}
+                                  </p>
+                                </div>
+                                
+                                <div className="flex flex-col items-end gap-2">
+                                  {product.price && (
+                                    <span className="text-2xl font-bold text-blue-600">
+                                      ₹{product.price}
+                                    </span>
+                                  )}
+                                  <button
+                                    onClick={() => handleWishlistToggle(product._id)}
+                                    disabled={isLoading}
+                                    className="p-2 hover:bg-gray-100 rounded-full transition-all disabled:opacity-50"
+                                  >
+                                    <Heart 
+                                      size={20} 
+                                      className={`transition-colors ${
+                                        isWishlisted 
+                                          ? "fill-red-500 text-red-500" 
+                                          : "text-gray-600"
+                                      } ${isLoading ? "animate-pulse" : ""}`} 
+                                    />
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              <div className="flex flex-wrap items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                  {product.category && (
+                                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                                      {product.category}
+                                    </span>
+                                  )}
+                                  {product.rating && (
+                                    <div className="flex items-center gap-1">
+                                      <Star size={14} className="text-yellow-400 fill-current" />
+                                      <span className="text-sm text-gray-600">{product.rating}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    onClick={() => navigateToProduct(product._id)}
+                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                                  >
+                                    View Product
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Pagination (if needed in future) */}
-                {filteredProducts.length > 0 && (
-                  <div className="mt-8 flex justify-center">
-                    <div className="flex items-center gap-2">
-                      <button className="px-4 py-2 border rounded-lg hover:bg-gray-50">
-                        Previous
-                      </button>
-                      <button className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-                        1
-                      </button>
-                      <button className="px-4 py-2 border rounded-lg hover:bg-gray-50">
-                        2
-                      </button>
-                      <button className="px-4 py-2 border rounded-lg hover:bg-gray-50">
-                        3
-                      </button>
-                      <button className="px-4 py-2 border rounded-lg hover:bg-gray-50">
-                        Next
-                      </button>
-                    </div>
+                      );
+                    })}
                   </div>
                 )}
               </>

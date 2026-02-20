@@ -41,7 +41,7 @@ const AdminEditProduct = () => {
   const [deletedImages, setDeletedImages] = useState([]);
 
   // Available options
-  const sizeOptions = ["xs", "s", "m", "l", "xl", "xxl", "3xl"];
+  const sizeOptions = ["xs", "s", "m", "l", "xl", "xxl", "xxxl"];
 
   // Fetch product
   useEffect(() => {

@@ -33,12 +33,24 @@ import WishlistPage from "./pages/WishlistPage";
 import SearchResultsPage from "./pages/SearchResultPage";
 import AdminOrders from "./Admin/AdminOrders";
 import AdminOrderDetail from "./Admin/AdminOrderDetail";
+import OfferMarquee from "./components/Offermarquee";
+import SaleBadge from "./components/SaleStricker";
+import MidOfferMarquee from "./components/midOffermarquee";
+import SaleSeal from "./components/Saleseal";
 
 const Home = () => (
   <>
+    <OfferMarquee />
     <Hero />
-    <CategoryGrid />
-    <FeaturedProducts />
+     <div className="relative hidden md:block">
+      <SaleBadge/>
+      <CategoryGrid />
+    </div>
+    <MidOfferMarquee />
+    <div className="relative hidden md:block">
+      <SaleSeal />
+      <FeaturedProducts />
+    </div>
   </>
 );
 

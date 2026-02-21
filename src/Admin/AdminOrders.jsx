@@ -6,8 +6,12 @@ import {
   Eye, Truck, CheckCircle, XCircle, Clock,
   Download, RefreshCw, Calendar, User, Phone,
   MapPin, CreditCard, IndianRupee, ArrowLeft,
-  Edit, Save, X, Loader, AlertCircle, Printer
+  Edit, Save, X, Loader, AlertCircle, Printer,
+  FileText, FileSpreadsheet, CalendarRange,
+  ChevronsLeft, ChevronsRight
 } from "lucide-react";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -19,13 +23,26 @@ const AdminOrders = () => {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   
+  // Export states
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportDateRange, setExportDateRange] = useState({
+    startDate: '',
+    endDate: ''
+  });
+  const [exportFormat, setExportFormat] = useState('pdf');
+  const [exportType, setExportType] = useState('filtered');
+  const [exportLoading, setExportLoading] = useState(false);
+  
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState("all");
   const [dateRange, setDateRange] = useState("all");
+  
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const itemsPerPageOptions = [10, 25, 50, 100];
   
   // Statistics
   const [stats, setStats] = useState({
@@ -74,28 +91,32 @@ const AdminOrders = () => {
     filterOrders();
   }, [orders, searchQuery, selectedStatus, selectedPaymentStatus, dateRange]);
 
-const fetchOrders = async () => {
-  try {
-    setLoading(true);
-    const res = await fetch(`${API_URL}/api/orders`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-    
-    if (data.success) {
-      // Safely extract the orders array
-      const ordersArray = data.data?.orders || [];
-      setOrders(ordersArray); // This will always be an array (empty if none)
-    } else {
-      setOrders([]); // Set empty array on failure
+  // Reset to first page when filters change or items per page changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredOrders.length, itemsPerPage]);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_URL}/api/orders`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        const ordersArray = data.data?.orders || [];
+        setOrders(ordersArray);
+      } else {
+        setOrders([]);
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      setOrders([]);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching orders:", error);
-    setOrders([]); // Set empty array on error
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const fetchStats = async () => {
     try {
@@ -113,12 +134,12 @@ const fetchOrders = async () => {
   };
 
   const filterOrders = () => {
-
-     if (!orders || !Array.isArray(orders)) {
-    console.log("Orders is not an array yet:", orders);
-    setFilteredOrders([]);
-    return;
-  }
+    if (!orders || !Array.isArray(orders)) {
+      console.log("Orders is not an array yet:", orders);
+      setFilteredOrders([]);
+      return;
+    }
+    
     let filtered = [...orders];
 
     // Search by order ID or customer name
@@ -171,7 +192,6 @@ const fetchOrders = async () => {
     filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
     setFilteredOrders(filtered);
-    setCurrentPage(1);
   };
 
   const handleViewOrder = async (orderId) => {
@@ -223,7 +243,7 @@ const fetchOrders = async () => {
           setSelectedOrder(prev => ({ ...prev, orderStatus: newStatus }));
         }
         
-        fetchStats(); // Refresh stats
+        fetchStats();
       } else {
         toast.error(data.message || "Failed to update status");
       }
@@ -253,7 +273,6 @@ const fetchOrders = async () => {
       if (data.success) {
         toast.success(`Payment status updated to ${newStatus}`);
         
-        // Update local state
         setOrders(prev => prev.map(order => 
           order._id === orderId ? { ...order, paymentStatus: newStatus } : order
         ));
@@ -304,17 +323,220 @@ const fetchOrders = async () => {
     }
   };
 
-  const handleExportOrders = () => {
+  // Enhanced export function
+  const handleExportOrders = async () => {
+    try {
+      setExportLoading(true);
+      
+      let dataToExport = [];
+      let exportTitle = '';
+      let fileName = '';
+      
+      // Determine which data to export
+      if (exportType === 'filtered') {
+        dataToExport = filteredOrders;
+        exportTitle = 'Filtered Orders Report';
+        fileName = `filtered_orders_${new Date().toISOString().split('T')[0]}`;
+      } else if (exportType === 'dateRange' && exportDateRange.startDate && exportDateRange.endDate) {
+        // Filter by custom date range
+        const start = new Date(exportDateRange.startDate);
+        const end = new Date(exportDateRange.endDate);
+        end.setHours(23, 59, 59, 999);
+        
+        dataToExport = orders.filter(order => {
+          const orderDate = new Date(order.createdAt);
+          return orderDate >= start && orderDate <= end;
+        });
+        
+        exportTitle = `Orders Report (${new Date(exportDateRange.startDate).toLocaleDateString()} - ${new Date(exportDateRange.endDate).toLocaleDateString()})`;
+        fileName = `orders_${exportDateRange.startDate}_to_${exportDateRange.endDate}`;
+      } else {
+        dataToExport = orders;
+        exportTitle = 'All Orders Report';
+        fileName = `all_orders_${new Date().toISOString().split('T')[0]}`;
+      }
+      
+      if (dataToExport.length === 0) {
+        toast.warning("No orders to export in the selected range");
+        return;
+      }
+      
+      if (exportFormat === 'pdf') {
+        generatePDF(dataToExport, exportTitle, fileName);
+      } else {
+        generateCSV(dataToExport, fileName);
+      }
+      
+      setShowExportModal(false);
+      toast.success(`${dataToExport.length} orders exported successfully`);
+      
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export orders");
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  // PDF Generation function
+  const generatePDF = (ordersData, title, fileName) => {
+    const doc = new jsPDF('landscape');
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.text(title, 14, 22);
+    
+    // Add generation date and filters info
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    let yOffset = 30;
+    
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, yOffset);
+    yOffset += 7;
+    
+    // Add applied filters info
+    const filters = [];
+    if (selectedStatus !== 'all') filters.push(`Status: ${selectedStatus}`);
+    if (selectedPaymentStatus !== 'all') filters.push(`Payment: ${selectedPaymentStatus}`);
+    if (dateRange !== 'all') filters.push(`Date Range: ${dateRange}`);
+    if (searchQuery) filters.push(`Search: "${searchQuery}"`);
+    
+    if (filters.length > 0) {
+      doc.text(`Applied Filters: ${filters.join(' | ')}`, 14, yOffset);
+      yOffset += 7;
+    }
+    
+    // Summary statistics
+    const totalOrders = ordersData.length;
+    const totalRevenue = ordersData.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    
+    doc.text(`Total Orders: ${totalOrders} | Total Revenue: ₹${totalRevenue.toLocaleString()} | Avg Order Value: ₹${avgOrderValue.toFixed(2)}`, 14, yOffset);
+    yOffset += 10;
+    
+    // Prepare table data
+    const tableColumn = [
+      "Order ID", 
+      "Date", 
+      "Customer", 
+      "Phone", 
+      "Items", 
+      "Subtotal", 
+      "GST", 
+      "Delivery", 
+      "Total", 
+      "Status", 
+      "Payment"
+    ];
+    
+    const tableRows = ordersData.map(order => [
+      order.orderId,
+      new Date(order.createdAt).toLocaleDateString(),
+      order.shippingAddress?.fullName || 'N/A',
+      order.shippingAddress?.phone || 'N/A',
+      order.items?.length || 0,
+      `₹${(order.subtotal || 0).toFixed(2)}`,
+      `₹${(order.gst || 0).toFixed(2)}`,
+      `₹${(order.deliveryCharge || 0).toFixed(2)}`,
+      `₹${(order.totalAmount || 0).toFixed(2)}`,
+      order.orderStatus?.replace(/_/g, ' ') || 'N/A',
+      order.paymentStatus || 'N/A'
+    ]);
+    
+    // Generate the table
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: yOffset,
+      styles: { 
+        fontSize: 7,
+        cellPadding: 2,
+        lineColor: [200, 200, 200],
+        lineWidth: 0.1,
+      },
+      headStyles: { 
+        fillColor: [41, 128, 185],
+        textColor: 255,
+        fontSize: 8,
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      alternateRowStyles: { 
+        fillColor: [245, 245, 245] 
+      },
+      margin: { top: yOffset, left: 10, right: 10 },
+      didDrawPage: (data) => {
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(
+          `Page ${data.pageNumber}`, 
+          doc.internal.pageSize.width / 2, 
+          doc.internal.pageSize.height - 10, 
+          { align: 'center' }
+        );
+      }
+    });
+    
+    // Add summary by status
+    const finalY = doc.lastAutoTable.finalY || yOffset;
+    
+    if (ordersData.length > 0) {
+      doc.setFontSize(10);
+      doc.setTextColor(0);
+      doc.text('Summary by Status:', 14, finalY + 10);
+      
+      const statusSummary = ordersData.reduce((acc, order) => {
+        const status = order.orderStatus || 'unknown';
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+      }, {});
+      
+      let summaryY = finalY + 15;
+      Object.entries(statusSummary).forEach(([status, count]) => {
+        doc.setFontSize(8);
+        doc.text(`${status.replace(/_/g, ' ')}: ${count} orders`, 14, summaryY);
+        summaryY += 5;
+      });
+      
+      // Add payment summary
+      doc.setFontSize(10);
+      doc.text('Summary by Payment:', 14, summaryY + 5);
+      
+      const paymentSummary = ordersData.reduce((acc, order) => {
+        const payment = order.paymentStatus || 'unknown';
+        acc[payment] = (acc[payment] || 0) + 1;
+        return acc;
+      }, {});
+      
+      summaryY += 10;
+      Object.entries(paymentSummary).forEach(([payment, count]) => {
+        doc.setFontSize(8);
+        doc.text(`${payment}: ${count} orders`, 14, summaryY);
+        summaryY += 5;
+      });
+    }
+    
+    doc.save(`${fileName}.pdf`);
+  };
+
+  // CSV Generation function
+  const generateCSV = (ordersData, fileName) => {
     const csvContent = [
-      ["Order ID", "Date", "Customer", "Items", "Total", "Status", "Payment"],
-      ...filteredOrders.map(order => [
+      ["Order ID", "Date", "Customer", "Phone", "Email", "Items Count", "Subtotal", "GST", "Delivery Charge", "Total", "Order Status", "Payment Status", "Address"],
+      ...ordersData.map(order => [
         order.orderId,
         new Date(order.createdAt).toLocaleDateString(),
         order.shippingAddress?.fullName || 'N/A',
+        order.shippingAddress?.phone || 'N/A',
+        order.user?.email || 'N/A',
         order.items?.length || 0,
-        order.totalAmount,
-        order.orderStatus,
-        order.paymentStatus
+        order.subtotal || 0,
+        order.gst || 0,
+        order.deliveryCharge || 0,
+        order.totalAmount || 0,
+        order.orderStatus || 'N/A',
+        order.paymentStatus || 'N/A',
+        `${order.shippingAddress?.street || ''}, ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} - ${order.shippingAddress?.pincode || ''}`
       ])
     ].map(row => row.join(',')).join('\n');
 
@@ -322,10 +544,9 @@ const fetchOrders = async () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `orders_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `${fileName}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-    toast.success("Orders exported successfully");
   };
 
   const clearFilters = () => {
@@ -335,11 +556,47 @@ const fetchOrders = async () => {
     setDateRange("all");
   };
 
-  // Pagination
+  // Pagination calculations
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredOrders.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+
+  // Pagination handlers
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () => setCurrentPage(prev => Math.max(1, prev - 1));
+  const goToNextPage = () => setCurrentPage(prev => Math.min(totalPages, prev + 1));
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pageNumbers.push(i);
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) pageNumbers.push(i);
+      } else {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pageNumbers.push(i);
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      }
+    }
+    
+    return pageNumbers;
+  };
 
   const getStatusBadge = (status, type = 'order') => {
     const options = type === 'order' ? orderStatusOptions : paymentStatusOptions;
@@ -386,7 +643,7 @@ const fetchOrders = async () => {
         </div>
         <div className="flex gap-3">
           <button
-            onClick={handleExportOrders}
+            onClick={() => setShowExportModal(true)}
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
           >
             <Download size={18} />
@@ -511,6 +768,121 @@ const fetchOrders = async () => {
         )}
       </div>
 
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">Export Orders</h3>
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Export Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Data to Export
+                </label>
+                <select
+                  value={exportType}
+                  onChange={(e) => setExportType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="filtered">Currently Filtered Orders ({filteredOrders.length})</option>
+                  <option value="all">All Orders ({orders.length})</option>
+                  <option value="dateRange">Custom Date Range</option>
+                </select>
+              </div>
+
+              {/* Date Range Selection */}
+              {exportType === 'dateRange' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={exportDateRange.startDate}
+                      onChange={(e) => setExportDateRange({...exportDateRange, startDate: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      max={exportDateRange.endDate || undefined}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={exportDateRange.endDate}
+                      onChange={(e) => setExportDateRange({...exportDateRange, endDate: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      min={exportDateRange.startDate || undefined}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Export Format */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Export Format
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="pdf"
+                      checked={exportFormat === 'pdf'}
+                      onChange={(e) => setExportFormat(e.target.value)}
+                      className="text-blue-600"
+                    />
+                    <FileText size={16} />
+                    PDF
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="csv"
+                      checked={exportFormat === 'csv'}
+                      onChange={(e) => setExportFormat(e.target.value)}
+                      className="text-blue-600"
+                    />
+                    <FileSpreadsheet size={16} />
+                    CSV
+                  </label>
+                </div>
+              </div>
+
+              {/* Export Button */}
+              <button
+                onClick={handleExportOrders}
+                disabled={exportLoading || (exportType === 'dateRange' && (!exportDateRange.startDate || !exportDateRange.endDate))}
+                className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {exportLoading ? (
+                  <>
+                    <Loader size={18} className="animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download size={18} />
+                    Export {exportFormat.toUpperCase()}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Orders Table */}
       {filteredOrders.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm p-12 text-center">
@@ -565,12 +937,12 @@ const fetchOrders = async () => {
                     </td>
                     <td className="px-4 py-3">
                       <button
-  onClick={() => navigate(`/admin/orders/${order._id}`)}
-  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-  title="View Details"
->
-  <Eye size={18} />
-</button>
+                        onClick={() => navigate(`/admin/orders/${order._id}`)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                        title="View Details"
+                      >
+                        <Eye size={18} />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -578,28 +950,98 @@ const fetchOrders = async () => {
             </table>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-6">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              
-              <span className="px-4 py-2 text-sm">
-                Page {currentPage} of {totalPages}
-              </span>
+          {/* Enhanced Pagination */}
+          {filteredOrders.length > 0 && (
+            <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+              {/* Items per page selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Show:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  className="px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  {itemsPerPageOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                <span className="text-sm text-gray-600">
+                  of {filteredOrders.length} orders
+                </span>
+              </div>
 
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-              >
-                <ChevronRight size={18} />
-              </button>
+              {/* Pagination controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  {/* First page */}
+                  <button
+                    onClick={goToFirstPage}
+                    disabled={currentPage === 1}
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="First Page"
+                  >
+                    <ChevronsLeft size={18} />
+                  </button>
+
+                  {/* Previous page */}
+                  <button
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Previous Page"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+
+                  {/* Page numbers */}
+                  <div className="flex items-center gap-1">
+                    {getPageNumbers().map((page, index) => (
+                      page === '...' ? (
+                        <span key={`ellipsis-${index}`} className="px-3 py-2 text-gray-600">
+                          ...
+                        </span>
+                      ) : (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                            currentPage === page
+                              ? 'bg-blue-600 text-white'
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    ))}
+                  </div>
+
+                  {/* Next page */}
+                  <button
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Next Page"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+
+                  {/* Last page */}
+                  <button
+                    onClick={goToLastPage}
+                    disabled={currentPage === totalPages}
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Last Page"
+                  >
+                    <ChevronsRight size={18} />
+                  </button>
+                </div>
+              )}
+
+              {/* Showing info */}
+              <div className="text-sm text-gray-600">
+                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredOrders.length)} of {filteredOrders.length} orders
+              </div>
             </div>
           )}
         </>
@@ -637,7 +1079,7 @@ const StatCard = ({ title, value, icon: Icon, color }) => (
   </div>
 );
 
-// Order Details Modal Component
+// Order Details Modal Component (unchanged - keeping it the same as before)
 const OrderDetailsModal = ({ 
   order, 
   onClose, 

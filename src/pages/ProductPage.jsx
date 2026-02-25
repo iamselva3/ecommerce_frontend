@@ -12,6 +12,37 @@ import LogoLoader from "../components/LogoLoader";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// Helper function to format sizes for display
+const formatSizeForDisplay = (size, category) => {
+  if (!size) return size;
+  
+  // Check if this is a shoe product
+  const isShoe = category?.toLowerCase() === "shoes" || category?.toLowerCase() === "shoe";
+  
+  if (isShoe) {
+    // Map letter sizes to numbers for display only
+    const shoeSizeMap = {
+      'xs': '6',
+      's': '7',
+      'm': '8',
+      'l': '9',
+      'xl': '10',
+      'xxl': '11',
+      'xs/s': '6/7',
+      's/m': '7/8',
+      'm/l': '8/9',
+      'l/xl': '9/10',
+      'xl/xxl': '10/11'
+    };
+    
+    const normalizedSize = String(size).toLowerCase();
+    return shoeSizeMap[normalizedSize] || size;
+  }
+  
+  // For non-shoe products, just uppercase the size
+  return String(size).toUpperCase();
+};
+
 const ProductPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -397,8 +428,6 @@ console.log("Token from localStorage:", token);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          {/* <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div> */}
-          {/* <p className="mt-4 text-gray-600">Loading product details...</p> */}
           <LogoLoader />
         </div>
       </div>
@@ -630,7 +659,7 @@ console.log("Token from localStorage:", token);
                           : "border-gray-300 hover:border-gray-400"
                       }`}
                     >
-                      {size.toUpperCase()}
+                      {formatSizeForDisplay(size, product.category)}
                     </button>
                   ))}
                 </div>

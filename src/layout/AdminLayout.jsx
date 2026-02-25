@@ -4,7 +4,8 @@ import {
   LogOut, Settings, ChevronDown, Menu, X,
   Home, Bell, Search, UserCircle,
   Package2,
-  ShoppingCart
+  ShoppingCart,
+  MapPin
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
@@ -72,6 +73,12 @@ const AdminLayout = () => {
       icon: <ShoppingCart size={20} />, 
       label: "Orders",
       description: "Manage orders"
+    },
+     { 
+      to: "/admin/pincode", 
+      icon: <MapPin size={20} />, 
+      label: "Pincodes",
+      description: "Manage Pincodes"
     },
   ];
 

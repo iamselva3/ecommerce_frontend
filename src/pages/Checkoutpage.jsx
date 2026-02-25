@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Trash2, Plus, Minus, ArrowLeft, Check } from "lucide-react";
 import LogoLoader from "../components/LogoLoader";
+import PincodeChecker from '../components/PincodeChecker';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -25,6 +26,21 @@ const CheckoutPage = () => {
   const location = useLocation();
   const token = localStorage.getItem("token");
 
+  const [isPincodeValidated, setIsPincodeValidated] = useState(false);
+const [validatedPincodeData, setValidatedPincodeData] = useState(null);
+
+// Add this import at the top
+
+// Add this callback function
+const handlePincodeValidated = (pincodeData) => {
+  setValidatedPincodeData(pincodeData);
+  setIsPincodeValidated(true);
+};
+
+// Update your handlePlaceOrder function to check pincode validation
+// const handlePlaceOrder = async () => {
+
+// }
   // Check if this is direct buy (not from cart)
   const directProduct = location.state?.directProduct;
 
@@ -156,13 +172,20 @@ const CheckoutPage = () => {
   };
 
   // Handle address change
-  const handleAddressChange = (e) => {
-    const { name, value } = e.target;
-    setAddress((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  // Handle address change
+const handleAddressChange = (e) => {
+  const { name, value } = e.target;
+  setAddress((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+  
+  // If pincode field changes, reset validation
+  if (name === 'pincode') {
+    setIsPincodeValidated(false);
+    setValidatedPincodeData(null);
+  }
+};
 
   // Validate address
   const validateAddress = () => {
@@ -193,7 +216,25 @@ const CheckoutPage = () => {
 
   // Place order
 const handlePlaceOrder = async () => {
-  if (!validateAddress()) return;
+    if (!validateAddress()) return;
+  
+  if (!validateSizes()) {
+    toast.error("Please select size for all items");
+    return;
+  }
+
+  
+  if (!isPincodeValidated || !validatedPincodeData?.isDeliverable) {
+    toast.error("Please check delivery availability for your pincode first");
+    return;
+  }
+
+ 
+  if (paymentMethod === "cod" && !validatedPincodeData?.codAvailable) {
+    toast.error("Cash on Delivery is not available at your location. Please choose another payment method.");
+    return;
+  }
+
   
   if (!validateSizes()) {
     toast.error("Please select size for all items");
@@ -624,6 +665,19 @@ const navigateToPaymentPage = () => {
               </div>
             </div>
 
+            <div className="mt-8">
+  <PincodeChecker
+     onPincodeValidated={handlePincodeValidated}
+    selectedPincode={address.pincode}
+    setSelectedPincode={(pincode) => {
+    
+      setAddress(prev => ({ ...prev, pincode }));
+      setIsPincodeValidated(false);
+      setValidatedPincodeData(null);
+    }}
+  />
+</div>
+
             {/* Payment Method */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">
@@ -725,27 +779,27 @@ const navigateToPaymentPage = () => {
                     </p>
                   </div>
                   
-                  <button
-                    onClick={handlePlaceOrder}
-                    disabled={!validateSizes()}
-                    className={`w-full py-4 rounded-lg font-bold text-white transition-all mt-6
-                      ${
-                        validateSizes()
-                          ? "bg-black hover:bg-gray-800 active:scale-[0.98]"
-                          : "bg-gray-300 cursor-not-allowed"
-                      }
-                    `}
-                  >
-                    {validateSizes() ? (
-                      paymentMethod === "cod" ? (
-                        "Place Order (Cash on Delivery)"
-                      ) : (
-                        "Proceed to Payment"
-                      )
-                    ) : (
-                      "Select Sizes First"
-                    )}
-                  </button>
+                 <button
+  onClick={handlePlaceOrder}
+  disabled={!validateSizes() || !isPincodeValidated}
+  className={`w-full py-4 rounded-lg font-bold text-white transition-all mt-6
+    ${
+      validateSizes() && isPincodeValidated
+        ? "bg-black hover:bg-gray-800 active:scale-[0.98]"
+        : "bg-gray-300 cursor-not-allowed"
+    }
+  `}
+>
+  {!isPincodeValidated ? (
+    "Check Pincode First"
+  ) : !validateSizes() ? (
+    "Select Sizes First"
+  ) : paymentMethod === "cod" ? (
+    "Place Order (Cash on Delivery)"
+  ) : (
+    "Proceed to Payment"
+  )}
+</button>
                   
                   <p className="text-xs text-center text-gray-500 mt-4">
                     By placing your order, you agree to our Terms of Service and Privacy Policy.

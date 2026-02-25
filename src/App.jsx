@@ -37,6 +37,9 @@ import OfferMarquee from "./components/Offermarquee";
 import SaleBadge from "./components/SaleStricker";
 import MidOfferMarquee from "./components/midOffermarquee";
 import SaleSeal from "./components/Saleseal";
+import BlogPage from "./pages/BlogPage";
+import BlogPostPage from "./pages/BlogPostPage";
+import AdminPincodes from "./Admin/AdminPincode";
 
 const Home = () => (
   <>
@@ -80,6 +83,7 @@ function App() {
           <Route path="/orders" element={<OrdersListPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/search" element={<SearchResultsPage />} />
+
       </Route>
 
       {/* Pages WITHOUT navbar */}
@@ -87,6 +91,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/blog" element={<BlogPage />} />
+<Route path="/blog/:slug" element={<BlogPostPage />} />
       </Route>
 
       <Route path="/admin/login" element={<AdminLogin />} />
@@ -109,6 +115,7 @@ function App() {
 <Route path="products/edit/:id" element={<AdminEditProduct />} />
 <Route path="orders/:orderId" element={<AdminOrderDetail />} />
 <Route path="dashboard" element={<AdminDashboard />} />
+<Route path="pincode" element={<AdminPincodes />}/>
       </Route>
 
      

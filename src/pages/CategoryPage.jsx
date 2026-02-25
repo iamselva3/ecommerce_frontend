@@ -18,6 +18,35 @@ const CategoryPage = () => {
 
   const scrollRef = useRef(null);
 
+
+ const formatSizes = (sizes, category) => {
+  if (!sizes) return "";
+
+  const isShoe = category?.toLowerCase() === "shoes";
+
+  const shoeSizeMap = {
+    xs: "6",
+    s: "7",
+    m: "8",
+    l: "9",
+    xl: "10",
+    xxl: "11",
+  };
+
+  return sizes
+    .map((size) => {
+      const normalized = String(size).toLowerCase();
+
+      if (isShoe) {
+        return shoeSizeMap[normalized] || size;
+      } else {
+        return normalized.toUpperCase();
+      }
+    })
+    .join(", ");
+};
+
+
   // Fetch cart items
   const fetchCartItems = async () => {
     if (!token) return;
@@ -198,7 +227,7 @@ const CategoryPage = () => {
                   </h3>
 
                   <p className="text-sm text-gray-500">
-                    Size: {item.sizes?.join(", ").toUpperCase()}
+         Available Sizes: {formatSizes(item.sizes, category)}
                   </p>
 
                   <p className="text-lg font-bold mt-1">

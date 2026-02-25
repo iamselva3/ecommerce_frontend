@@ -453,7 +453,7 @@ const AdminProducts = () => {
 
                     {/* Stock Status */}
                     <div className="mb-3">
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                      {/* <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                         p.stock > 10 
                           ? "bg-green-100 text-green-700" 
                           : p.stock > 0 
@@ -461,7 +461,7 @@ const AdminProducts = () => {
                           : "bg-red-100 text-red-700"
                       }`}>
                         {p.stock > 10 ? "In Stock" : p.stock > 0 ? `Only ${p.stock} left` : "Out of Stock"}
-                      </span>
+                      </span> */}
                     </div>
 
                     {/* Action Buttons */}

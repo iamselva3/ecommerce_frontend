@@ -6,11 +6,9 @@ import { useNavigate } from "react-router-dom";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ProductCard = ({ product }) => {
-  console.log("product", product);
+console.log("Product images:", product.images);
+
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [selectedSize, setSelectedSize] = useState(
-    product.sizes?.[0] || ""
-  );
   const [isHovered, setIsHovered] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
@@ -39,7 +37,7 @@ const ProductCard = ({ product }) => {
     };
 
     checkWishlistStatus();
-  }, [product._id, token]); // Added proper dependencies
+  }, [product._id, token]);
 
   const handleWishlistToggle = async (productId) => {
     console.log("Toggling wishlist for:", productId);
@@ -78,46 +76,44 @@ const ProductCard = ({ product }) => {
     }
   };
 
-  const handleAddToCart = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+ const handleAddToCart = async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-    if (!token) {
-      toast.info("Please login to continue");
-      navigate("/login");
-      return;
-    }
+  if (!token) {
+    toast.info("Please login to continue");
+    navigate("/login");
+    return;
+  }
 
-    if (!selectedSize) {
-      toast.error("Please select a size");
-      return;
-    }
+  try {
+    // Convert all sizes to lowercase before sending
+    const normalizedSizes = product.sizes?.map(size => size.toLowerCase()) || [];
 
-    try {
-      const res = await fetch(`${API_URL}/api/cart`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          productId: product._id || product.id,
-          name: product.name,
-          price: product.price,
-          sizes: [selectedSize.toLowerCase()],
-          image: product?.images?.[0]?.url || product.url,
-          qty: 1,
-        }),
-      });
+    const res = await fetch(`${API_URL}/api/cart`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        productId: product._id || product.id,
+        name: product.name,
+        price: product.price,
+        sizes: normalizedSizes, // Send lowercase sizes
+        image: product?.images?.[0]?.url || product?.images,
+        qty: 1,
+      }),
+    });
 
-      if (!res.ok) throw new Error();
+    if (!res.ok) throw new Error();
 
-      toast.success("Added to cart 🛒");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to add to cart");
-    }
-  };
+    toast.success("Added to cart 🛒");
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to add to cart");
+  }
+};
 
   const handleQuickView = (e) => {
     e.preventDefault();
@@ -214,29 +210,22 @@ const ProductCard = ({ product }) => {
           ₹{product.price}
         </p>
 
-        {/* Size Selection */}
-        <div className="mt-3">
-          <p className="text-xs text-gray-600 mb-1">Select Size</p>
-          <div className="flex gap-2 flex-wrap">
-            {product.sizes?.map((size) => (
-              <button
-                key={size}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setSelectedSize(size);
-                }}
-                className={`px-3 py-1 text-sm border rounded ${
-                  selectedSize === size
-                    ? "bg-black text-white"
-                    : "hover:border-black"
-                }`}
-              >
-                {size}
-              </button>
-            ))}
+        {/* Available Sizes - Now just displayed, not selectable */}
+        {product.sizes && product.sizes.length > 0 && (
+          <div className="mt-3">
+            <p className="text-xs text-gray-600 mb-1">Available Sizes:</p>
+            <div className="flex gap-2 flex-wrap">
+              {product.sizes.map((size) => (
+                <span
+                  key={size}
+                  className="px-3 py-1 text-sm bg-gray-100 text-gray-700 border border-gray-200 rounded"
+                >
+                  {size}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Add to Cart */}
         <button

@@ -54,10 +54,9 @@ function LocationMarker({ position, setPosition }) {
   ) : null;
 }
 
-const 
-PincodeChecker = ({ onPincodeValidated, selectedPincode,onPincodeChange }) => {
+const PincodeChecker = ({ onPincodeValidated, selectedPincode, onPincodeChange }) => {
   const [pincode, setPincode] = useState(selectedPincode || '');
-  console.log("suiauid",pincode)
+  console.log("suiauid", pincode);
   const [checking, setChecking] = useState(false);
   const [pincodeData, setPincodeData] = useState(null);
   const [showMapModal, setShowMapModal] = useState(false);
@@ -65,8 +64,7 @@ PincodeChecker = ({ onPincodeValidated, selectedPincode,onPincodeChange }) => {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
 
-
-   useEffect(() => {
+  useEffect(() => {
     if (selectedPincode) {
       setPincode(selectedPincode);
     }
@@ -78,9 +76,7 @@ PincodeChecker = ({ onPincodeValidated, selectedPincode,onPincodeChange }) => {
       return;
     }
 
-
     setChecking(true);
-    
     setPincodeData(null);
 
     try {
@@ -92,10 +88,12 @@ PincodeChecker = ({ onPincodeValidated, selectedPincode,onPincodeChange }) => {
         if (onPincodeValidated) {
           onPincodeValidated(data.data);
         }
+        
+        // Show toast based on deliverability
         if (data.data.isDeliverable) {
-          // toast.success(`Deliverable to ${data.data.city}, ${data.data.state}`);
+          toast.success(` Deliverable to ${data.data.city}, ${data.data.state}`);
         } else {
-          // toast.error(` Not deliverable to ${pincode}`);
+          toast.error(` Not deliverable to ${pincode}`);
         }
       } else {
         toast.error(data.message || 'Invalid pincode');
@@ -151,8 +149,6 @@ PincodeChecker = ({ onPincodeValidated, selectedPincode,onPincodeChange }) => {
     setShowMapModal(false);
   };
 
-  
-  
   // Update when location is confirmed
   const getPincodeFromCoordinates = async (lat, lng) => {
     setChecking(true);
@@ -176,10 +172,12 @@ PincodeChecker = ({ onPincodeValidated, selectedPincode,onPincodeChange }) => {
         if (onPincodeValidated) {
           onPincodeValidated(data.data);
         }
+        
+        // Show toast based on deliverability
         if (data.data.isDeliverable) {
-          // toast.success(`Deliverable to ${data.data.city}, ${data.data.state}`);
+          toast.success(`Deliverable to ${data.data.city}, ${data.data.state}`);
         } else {
-          // toast.warning(`Currently not deliverable to ${data.data.pincode}`);
+          toast.warning(` Currently not deliverable to ${data.data.pincode}`);
         }
       } else {
         toast.error('Could not determine your location');
@@ -192,7 +190,6 @@ PincodeChecker = ({ onPincodeValidated, selectedPincode,onPincodeChange }) => {
     }
   };
 
-
   const handleClearPincode = () => {
     setPincode('');
     if (onPincodeChange) {
@@ -201,7 +198,7 @@ PincodeChecker = ({ onPincodeValidated, selectedPincode,onPincodeChange }) => {
     setPincodeData(null);
   };
 
-   const handlePincodeInput = (e) => {
+  const handlePincodeInput = (e) => {
     const newPincode = e.target.value.replace(/\D/g, '').slice(0, 6);
     setPincode(newPincode);
     
@@ -210,8 +207,9 @@ PincodeChecker = ({ onPincodeValidated, selectedPincode,onPincodeChange }) => {
       onPincodeChange(newPincode);
     }
     
+    // Clear validation data when user types
+    setPincodeData(null);
   };
-
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
@@ -226,7 +224,6 @@ PincodeChecker = ({ onPincodeValidated, selectedPincode,onPincodeChange }) => {
           <input
             type="text"
             value={pincode}
-            // onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
             onChange={handlePincodeInput}
             placeholder="Enter pincode"
             className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

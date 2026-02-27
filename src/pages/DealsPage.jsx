@@ -100,6 +100,7 @@ const DealsPage = () => {
     navigate("/login");
     return;
   }
+  console.log("ite",item.sizes)
 
   // Navigate directly with product data
   navigate("/checkout", {
@@ -107,6 +108,7 @@ const DealsPage = () => {
       directProduct: {
         productId: item._id,
         name: item.name,
+        sizes:item.sizes,
         price: item.price,
         // image: item.signedUrl || item.url,
         image: item?.images?.[0]?.url || item.url,

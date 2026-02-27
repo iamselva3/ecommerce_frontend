@@ -9,6 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const CheckoutPage = () => {
   const [cart, setCart] = useState(null);
+  console.log("cart",cart)
   const [loading, setLoading] = useState(true);
   const [selectedSizes, setSelectedSizes] = useState({});
   const [address, setAddress] = useState({
@@ -61,9 +62,10 @@ const handlePincodeValidated = (pincodeData) => {
             price: directProduct.price,
             image: directProduct.image,
             qty: directProduct.qty || 1,
-            sizes: ["S", "M", "L", "XL"],
+            // sizes: ["S", "M", "L", "XL"],
+            sizes:directProduct.sizes,
             category: "products",
-            availableSizes: ["S", "M", "L", "XL"],
+            // availableSizes: ["S", "M", "L", "XL"],
           },
         ],
         isDirectBuy: true,
@@ -88,8 +90,8 @@ const handlePincodeValidated = (pincodeData) => {
           // Initialize selected sizes for each item
           const initialSizes = {};
           cartData.items?.forEach((item) => {
-            if (item.availableSizes?.length > 0) {
-              initialSizes[item.productId] = item.availableSizes[0];
+            if (item.sizes?.length > 0) {
+              initialSizes[item.productId] = item.sizes[0];
             } else {
               initialSizes[item.productId] = "M"; // Default size
             }
@@ -491,7 +493,7 @@ const navigateToPaymentPage = () => {
                           Select Size:
                         </p>
                         <div className="flex gap-2 flex-wrap">
-                          {(item.availableSizes || ["S", "M", "L", "XL"]).map(
+                          {(item.sizes || ["S", "M", "L", "XL"]).map(
                             (size) => (
                               <button
                                 key={size}

@@ -51,7 +51,6 @@ useEffect(() => {
       if (!cartData.items) {
         cartData.items = [];
       }
-      console.log("sdisduiuds", cartData)
       
       setCart(cartData);
     } catch (err) {
@@ -266,7 +265,7 @@ const handleClearCart = async () => {
                       {/* Product Image */}
                       <div className="relative">
                         <img
-                          src={item.image}
+                          src={item.image || item.images?.[0]?.url || item.images}
                           alt={item.name}
                           className="w-32 h-32 object-cover rounded-xl"
                           onError={(e) => {

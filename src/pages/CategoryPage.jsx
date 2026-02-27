@@ -163,6 +163,7 @@ const CategoryPage = () => {
           productId: item._id,
           name: item.name,
           price: item.price,
+          sizes:item.sizes,
           image: item?.images?.[0]?.url || item.url,
           qty: 1
         }

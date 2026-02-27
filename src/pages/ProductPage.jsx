@@ -239,6 +239,7 @@ const ProductPage = () => {
           productId: product._id,
           name: product.name,
           price: product.price,
+          sizes:product.sizes,
           image: product.images?.[0]?.url || product.url,
           qty: quantity
         }

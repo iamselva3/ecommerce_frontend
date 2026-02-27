@@ -26,6 +26,7 @@ const WishlistPage = () => {
   const [filteredItems, setFilteredItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [cartProductIds, setCartProductIds] = useState({});
   const [categories, setCategories] = useState([
     { id: "all", name: "All Items", count: 0 },
     { id: "shirts", name: "Shirts", count: 0 },
@@ -87,6 +88,32 @@ const WishlistPage = () => {
       setLoading(false);
     }
   };
+
+  // Add this after your existing useEffects
+useEffect(() => {
+  const fetchCartStatus = async () => {
+    if (!token) return;
+    
+    try {
+      const res = await fetch(`${API_URL}/api/cart`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const cartMap = {};
+        data.data?.items?.forEach(item => {
+          cartMap[item.productId] = true;
+        });
+        setCartProductIds(cartMap);
+      }
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+    }
+  };
+  
+  fetchCartStatus();
+}, [token]);
 
   const updateCategoryCounts = (items) => {
     const itemsArray = Array.isArray(items) ? items : [];
@@ -165,7 +192,6 @@ const addToCart = async (item) => {
   }
 
   try {
-    // Get sizes from multiple possible locations
     let itemSizes = [];
     
     if (item.sizes && item.sizes.length > 0) {
@@ -173,7 +199,7 @@ const addToCart = async (item) => {
     } else if (item.product && item.product.sizes) {
       itemSizes = item.product.sizes;
     } else {
-      itemSizes = ["m"]; // Default fallback
+      itemSizes = ["m"];
     }
     
     const normalizedSizes = itemSizes.map(size => size.toLowerCase());
@@ -200,6 +226,8 @@ const addToCart = async (item) => {
       throw new Error();
     }
 
+    // Update cart status
+    setCartProductIds(prev => ({ ...prev, [item._id]: true }));
     toast.success("Added to cart");
   } catch (error) {
     console.error("Error adding to cart:", error);
@@ -208,16 +236,30 @@ const addToCart = async (item) => {
 };
 
 
-  const moveAllToCart = async () => {
+const moveAllToCart = async () => {
   try {
-    // Show loading toast
     const loadingToast = toast.loading("Moving items to cart...");
     
     let successCount = 0;
     let failCount = 0;
+    let alreadyInCartCount = 0;
+    const successfullyMovedItems = [];
 
     for (const item of filteredItems) {
       try {
+        if (cartProductIds[item._id]) {
+          alreadyInCartCount++;
+          successfullyMovedItems.push(item._id);
+          continue;
+        }
+
+        // Get sizes and normalize them
+        let itemSizes = item.sizes || ["m"];
+        if (itemSizes.length === 0) {
+          itemSizes = ["m"];
+        }
+        const normalizedSizes = itemSizes.map(size => size.toLowerCase());
+
         const res = await fetch(`${API_URL}/api/cart`, {
           method: "POST",
           headers: {
@@ -228,7 +270,7 @@ const addToCart = async (item) => {
             productId: item._id,
             name: item.name,
             price: item.price,
-            sizes: item.sizes || ["M"],
+            sizes: normalizedSizes, 
             image: item.images?.[0]?.url || item.url || item.image,
             qty: 1,
           }),
@@ -236,6 +278,8 @@ const addToCart = async (item) => {
 
         if (res.ok) {
           successCount++;
+          successfullyMovedItems.push(item._id);
+          setCartProductIds(prev => ({ ...prev, [item._id]: true }));
         } else {
           failCount++;
         }
@@ -244,16 +288,48 @@ const addToCart = async (item) => {
       }
     }
 
+    if (successfullyMovedItems.length > 0) {
+      await removeMultipleFromWishlist(successfullyMovedItems);
+    }
+
     toast.dismiss(loadingToast);
     
+    let message = [];
     if (successCount > 0) {
-      toast.success(`${successCount} item${successCount > 1 ? 's' : ''} added to cart`);
+      message.push(`${successCount} item${successCount > 1 ? 's' : ''} added to cart`);
+    }
+    if (alreadyInCartCount > 0) {
+      message.push(`${alreadyInCartCount} item${alreadyInCartCount > 1 ? 's' : ''} already in cart`);
     }
     if (failCount > 0) {
-      toast.error(`Failed to add ${failCount} item${failCount > 1 ? 's' : ''}`);
+      message.push(`${failCount} item${failCount > 1 ? 's' : ''} failed`);
+    }
+    
+    if (message.length > 0) {
+      toast.success(message.join('. '));
     }
   } catch (error) {
     toast.error("Failed to move all items to cart");
+  }
+};
+
+
+const removeMultipleFromWishlist = async (productIds) => {
+  try {
+   
+    await Promise.all(
+      productIds.map(productId =>
+        fetch(`${API_URL}/api/wishlist/${productId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      )
+    );
+  
+    setWishlist(prev => prev.filter(item => !productIds.includes(item._id)));
+    
+  } catch (error) {
+    console.error("Error removing from wishlist:", error);
   }
 };
 

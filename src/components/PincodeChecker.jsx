@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapPin, Search, X, Loader, CheckCircle, XCircle, Truck, Map, Navigation } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -54,8 +54,10 @@ function LocationMarker({ position, setPosition }) {
   ) : null;
 }
 
-const PincodeChecker = ({ onPincodeValidated, selectedPincode, setSelectedPincode }) => {
+const 
+PincodeChecker = ({ onPincodeValidated, selectedPincode,onPincodeChange }) => {
   const [pincode, setPincode] = useState(selectedPincode || '');
+  console.log("suiauid",pincode)
   const [checking, setChecking] = useState(false);
   const [pincodeData, setPincodeData] = useState(null);
   const [showMapModal, setShowMapModal] = useState(false);
@@ -63,13 +65,22 @@ const PincodeChecker = ({ onPincodeValidated, selectedPincode, setSelectedPincod
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
 
+
+   useEffect(() => {
+    if (selectedPincode) {
+      setPincode(selectedPincode);
+    }
+  }, [selectedPincode]);
+
   const handleCheckPincode = async () => {
     if (!pincode || pincode.length !== 6) {
       toast.error('Please enter a valid 6-digit pincode');
       return;
     }
 
+
     setChecking(true);
+    
     setPincodeData(null);
 
     try {
@@ -82,10 +93,9 @@ const PincodeChecker = ({ onPincodeValidated, selectedPincode, setSelectedPincod
           onPincodeValidated(data.data);
         }
         if (data.data.isDeliverable) {
-          setSelectedPincode(pincode);
-          toast.success(`Deliverable to ${data.data.city}, ${data.data.state}`);
+          // toast.success(`Deliverable to ${data.data.city}, ${data.data.state}`);
         } else {
-          toast.error(` Not deliverable to ${pincode}`);
+          // toast.error(` Not deliverable to ${pincode}`);
         }
       } else {
         toast.error(data.message || 'Invalid pincode');
@@ -119,7 +129,6 @@ const PincodeChecker = ({ onPincodeValidated, selectedPincode, setSelectedPincod
         console.error('Geolocation error:', error);
         toast.error('Unable to get your location. Please select on map manually.');
         setLocationLoading(false);
-        // Keep map open for manual selection
       }
     );
   };
@@ -142,6 +151,9 @@ const PincodeChecker = ({ onPincodeValidated, selectedPincode, setSelectedPincod
     setShowMapModal(false);
   };
 
+  
+  
+  // Update when location is confirmed
   const getPincodeFromCoordinates = async (lat, lng) => {
     setChecking(true);
     
@@ -152,16 +164,22 @@ const PincodeChecker = ({ onPincodeValidated, selectedPincode, setSelectedPincod
       const data = await response.json();
 
       if (data.success) {
-        setPincode(data.data.pincode);
+        const newPincode = data.data.pincode || selectedPincode;
+        setPincode(newPincode);
+        
+        // Update parent's address pincode
+        if (onPincodeChange) {
+          onPincodeChange(newPincode);
+        }
+        
         setPincodeData(data.data);
         if (onPincodeValidated) {
           onPincodeValidated(data.data);
         }
         if (data.data.isDeliverable) {
-          setSelectedPincode(data.data.pincode);
-          toast.success(` Deliverable to ${data.data.city}, ${data.data.state}`);
+          // toast.success(`Deliverable to ${data.data.city}, ${data.data.state}`);
         } else {
-          toast.warning(` Currently not deliverable to ${data.data.pincode}`);
+          // toast.warning(`Currently not deliverable to ${data.data.pincode}`);
         }
       } else {
         toast.error('Could not determine your location');
@@ -174,11 +192,26 @@ const PincodeChecker = ({ onPincodeValidated, selectedPincode, setSelectedPincod
     }
   };
 
-  const clearPincode = () => {
+
+  const handleClearPincode = () => {
     setPincode('');
+    if (onPincodeChange) {
+      onPincodeChange('');
+    }
     setPincodeData(null);
-    setSelectedPincode('');
   };
+
+   const handlePincodeInput = (e) => {
+    const newPincode = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setPincode(newPincode);
+    
+    // Update parent's address pincode
+    if (onPincodeChange) {
+      onPincodeChange(newPincode);
+    }
+    
+  };
+
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
@@ -193,7 +226,8 @@ const PincodeChecker = ({ onPincodeValidated, selectedPincode, setSelectedPincod
           <input
             type="text"
             value={pincode}
-            onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            // onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            onChange={handlePincodeInput}
             placeholder="Enter pincode"
             className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             maxLength="6"
@@ -202,7 +236,7 @@ const PincodeChecker = ({ onPincodeValidated, selectedPincode, setSelectedPincod
           <MapPin size={18} className="absolute left-3 top-3.5 text-gray-400" />
           {pincode && (
             <button
-              onClick={clearPincode}
+              onClick={handleClearPincode}
               className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
             >
               <X size={18} />

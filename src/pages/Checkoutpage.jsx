@@ -28,6 +28,7 @@ const CheckoutPage = () => {
 
   const [isPincodeValidated, setIsPincodeValidated] = useState(false);
 const [validatedPincodeData, setValidatedPincodeData] = useState(null);
+console.log("dyusdu",isPincodeValidated)
 
 // Add this import at the top
 
@@ -210,7 +211,7 @@ const handleAddressChange = (e) => {
   // Validate all items have size selected
   const validateSizes = () => {
     if (!cart?.items) return false;
-    
+
     return cart.items.every((item) => selectedSizes[item.productId]);
   };
 
@@ -669,11 +670,8 @@ const navigateToPaymentPage = () => {
   <PincodeChecker
      onPincodeValidated={handlePincodeValidated}
     selectedPincode={address.pincode}
-    setSelectedPincode={(pincode) => {
-    
-      setAddress(prev => ({ ...prev, pincode }));
-      setIsPincodeValidated(false);
-      setValidatedPincodeData(null);
+    onPincodeChange={(newPincode) => {
+      setAddress(prev => ({ ...prev, pincode: newPincode }));
     }}
   />
 </div>
@@ -781,18 +779,16 @@ const navigateToPaymentPage = () => {
                   
                  <button
   onClick={handlePlaceOrder}
-  disabled={!validateSizes() || !isPincodeValidated}
+  disabled={!validateSizes()}
   className={`w-full py-4 rounded-lg font-bold text-white transition-all mt-6
     ${
-      validateSizes() && isPincodeValidated
+      validateSizes() 
         ? "bg-black hover:bg-gray-800 active:scale-[0.98]"
         : "bg-gray-300 cursor-not-allowed"
     }
   `}
 >
-  {!isPincodeValidated ? (
-    "Check Pincode First"
-  ) : !validateSizes() ? (
+  { !validateSizes() ? (
     "Select Sizes First"
   ) : paymentMethod === "cod" ? (
     "Place Order (Cash on Delivery)"

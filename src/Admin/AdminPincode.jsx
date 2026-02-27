@@ -176,32 +176,38 @@ const AdminPincodes = () => {
   };
 
   const handleUpdatePincode = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/pincode/admin/${selectedPincode.pincode}/deliverability`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        toast.success("Pincode updated successfully");
-        setShowEditModal(false);
-        setSelectedPincode(null);
-        resetForm();
-        fetchPincodes();
-      } else {
-        toast.error(data.message || "Failed to update pincode");
-      }
-    } catch (error) {
-      console.error("Error updating pincode:", error);
-      toast.error("Failed to update pincode");
+  try {
+    // Validate required fields
+    if (!formData.city || !formData.state || !formData.district) {
+      toast.error("Please fill all required fields");
+      return;
     }
-  };
+
+    const res = await fetch(`${API_URL}/api/pincode/admin/${selectedPincode.pincode}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(formData)
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      toast.success("Pincode updated successfully");
+      setShowEditModal(false);
+      setSelectedPincode(null);
+      resetForm();
+      fetchPincodes();
+    } else {
+      toast.error(data.message || "Failed to update pincode");
+    }
+  } catch (error) {
+    console.error("Error updating pincode:", error);
+    toast.error("Failed to update pincode");
+  }
+};
 
   const handleBulkUpload = async () => {
     try {
@@ -263,29 +269,30 @@ const AdminPincodes = () => {
   };
 
   const toggleDeliverability = async (pincode, currentStatus) => {
-    try {
-      const res = await fetch(`${API_URL}/api/pincode/admin/${pincode}/deliverability`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ isDeliverable: !currentStatus })
-      });
+  try {
+    // Just update the deliverability field using the same API
+    const res = await fetch(`${API_URL}/api/pincode/admin/${pincode}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ isDeliverable: !currentStatus })
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (data.success) {
-        toast.success(`Pincode ${!currentStatus ? 'enabled' : 'disabled'}`);
-        fetchPincodes();
-      } else {
-        toast.error(data.message || "Failed to update");
-      }
-    } catch (error) {
-      console.error("Error toggling deliverability:", error);
-      toast.error("Failed to update");
+    if (data.success) {
+      toast.success(`Pincode ${!currentStatus ? 'enabled' : 'disabled'}`);
+      fetchPincodes();
+    } else {
+      toast.error(data.message || "Failed to update");
     }
-  };
+  } catch (error) {
+    console.error("Error toggling deliverability:", error);
+    toast.error("Failed to update");
+  }
+};
 
   const handleEdit = (pincode) => {
     setSelectedPincode(pincode);

@@ -28,35 +28,44 @@ const CartPage = () => {
   }, [token, navigate]);
 
   // Fetch cart
-  useEffect(() => {
-    const fetchCart = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/cart`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+useEffect(() => {
+  const fetchCart = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/cart`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        if (!res.ok) throw new Error("Failed to fetch cart");
-
-        const data = await res.json();
-        const cartData = data.data || data;
-        
-        // Ensure items array exists
-        if (!cartData.items) {
-          cartData.items = [];
-        }
-        console.log("sdisduiuds",cartData)
-        
-        setCart(cartData);
-      } catch (err) {
-        console.error("Cart fetch error:", err);
-        toast.error("Failed to load cart");
-      } finally {
+      // Handle 404 - cart not found (after clearing)
+      if (res.status === 404) {
+        setCart({ items: [] }); // Set empty cart
         setLoading(false);
+        return;
       }
-    };
 
-    if (token) fetchCart();
-  }, [token]);
+      if (!res.ok) throw new Error("Failed to fetch cart");
+
+      const data = await res.json();
+      const cartData = data.data || data;
+      
+      // Ensure items array exists
+      if (!cartData.items) {
+        cartData.items = [];
+      }
+      console.log("sdisduiuds", cartData)
+      
+      setCart(cartData);
+    } catch (err) {
+      console.error("Cart fetch error:", err);
+      // Set empty cart on error too
+      setCart({ items: [] });
+      toast.error("Failed to load cart");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (token) fetchCart();
+}, [token]);
 
   // Update quantity
   const updateQty = async (productId, qty) => {
@@ -143,6 +152,32 @@ const CartPage = () => {
   const calculateTotal = () => {
     return calculateSubtotal() + calculateGST() + calculateDelivery();
   };
+
+const handleClearCart = async () => {
+  if (!window.confirm("Clear all items from cart?")) return;
+  
+  try {
+    const response = await fetch(`${API_URL}/api/cart`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      
+      // Set cart with the returned data (which should have empty items)
+      setCart(data.data || { items: [] });
+      toast.success("Cart cleared successfully");
+    } else {
+      toast.error("Failed to clear cart");
+    }
+  } catch (error) {
+    console.error("Error clearing cart:", error);
+    toast.error("Failed to clear cart");
+  }
+};
 
   if (loading) {
     return (
@@ -357,11 +392,7 @@ const CartPage = () => {
                       Continue Shopping
                     </button>
                     <button
-                      onClick={() => {
-                        if (window.confirm("Clear all items from cart?")) {
-                          cart.items.forEach(item => removeItem(item.productId));
-                        }
-                      }}
+                      onClick={handleClearCart}
                       className="border border-red-300 text-red-600 px-6 py-3 rounded-lg hover:bg-red-50"
                     >
                       Clear Cart

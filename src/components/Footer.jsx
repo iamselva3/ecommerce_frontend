@@ -4,6 +4,11 @@ import {
   Youtube, Linkedin, Send, CreditCard, Shield, Truck,
   Clock, Heart, Award, ChevronRight
 } from 'lucide-react';
+import visa from '../../public/upi/visa.svg';
+import mastercard from '../../public/upi/mastercard.svg';
+import rupay from '../../public/upi/bhim.svg';
+import upi from '../../public/upi/bhim.svg';
+import paypal from '../../public/upi/paybal.svg';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -44,11 +49,11 @@ const Footer = () => {
   ];
 
   const paymentIcons = [
-    { name: 'Visa', icon: '💳' },
-    { name: 'Mastercard', icon: '💳' },
-    { name: 'RuPay', icon: '🏦' },
-    { name: 'UPI', icon: '📱' },
-    { name: 'PayPal', icon: '🅿️' },
+    { name: 'Visa', icon: visa },
+    { name: 'Mastercard', icon: mastercard },
+    // { name: 'RuPay', icon: rupay },
+    { name: 'UPI', icon: upi },
+    { name: 'PayPal', icon: paypal },
   ];
 
   const features = [
@@ -222,7 +227,11 @@ const Footer = () => {
                       className="bg-gray-800 px-3 py-2 rounded-lg text-sm flex items-center gap-1"
                       title={payment.name}
                     >
-                      <span>{payment.icon}</span>
+                     <img 
+                     src={payment.icon}
+                     alt={payment.name}
+                     className="w-6 h-6"
+                     />
                       <span className="text-gray-400">{payment.name}</span>
                     </div>
                   ))}

@@ -418,7 +418,7 @@ const navigateToProduct = (productId) => {
 
           {/* Icons */}
           <div className="flex items-center space-x-6">
-            <button className="relative hidden md:block">
+            <button className="relative">
               <a href='/profile'>
                 <User size={24} className="text-gray-700 hover:text-blue-600" />
               </a>
@@ -446,7 +446,7 @@ const navigateToProduct = (productId) => {
               </a>
             </button>
             
-            <button 
+            {/* <button 
               className="md:hidden"
               onClick={() => {
                 const searchInput = document.querySelector('.mobile-search-input');
@@ -454,7 +454,7 @@ const navigateToProduct = (productId) => {
               }}
             >
               <Search size={24} />
-            </button>
+            </button> */}
           </div>
         </div>
 

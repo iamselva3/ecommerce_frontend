@@ -45,13 +45,17 @@ const Home = () => (
   <>
     <OfferMarquee />
     <Hero />
-     <div className="relative hidden md:block">
-      <SaleBadge/>
-      <CategoryGrid />
-    </div>
+     <div className="relative">
+  <div className="hidden md:block">
+    <SaleBadge/>
+  </div>
+  <CategoryGrid />
+</div>
     <MidOfferMarquee />
-    <div className="relative hidden md:block">
+    <div className="relative ">
+      <div className="hidden md:block">
       <SaleSeal />
+      </div>
       <FeaturedProducts />
     </div>
   </>

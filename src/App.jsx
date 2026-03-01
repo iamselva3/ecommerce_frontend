@@ -40,6 +40,10 @@ import SaleSeal from "./components/Saleseal";
 import BlogPage from "./pages/BlogPage";
 import BlogPostPage from "./pages/BlogPostPage";
 import AdminPincodes from "./Admin/AdminPincode";
+import PrivacyPolicy from "./pages/PrivacyPolicyPage";
+import Sitemap from "./pages/SItemapPage";
+import TermsOfService from "./pages/TermsServicePage";
+import ShippingInfo from "./pages/ShippingInfo";
 
 const Home = () => (
   <>
@@ -87,6 +91,9 @@ function App() {
           <Route path="/orders" element={<OrdersListPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/search" element={<SearchResultsPage />} />
+          <Route path="/privacy" element={<PrivacyPolicy />}/>
+          <Route path='/terms' element={<TermsOfService />}/>
+          <Route path="/shipping" element={<ShippingInfo />}/>
 
       </Route>
 
@@ -97,6 +104,7 @@ function App() {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/blog" element={<BlogPage />} />
 <Route path="/blog/:slug" element={<BlogPostPage />} />
+          <Route path="/sitemap" element={<Sitemap />} />
       </Route>
 
       <Route path="/admin/login" element={<AdminLogin />} />

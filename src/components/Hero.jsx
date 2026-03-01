@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRight, ChevronLeft, ChevronRight as ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -160,13 +161,15 @@ const Hero = () => {
             </p>
             
             <div className="flex flex-wrap gap-4">
-              <button className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 flex items-center transition-all transform hover:scale-105">
+              <Link to='/shop' ><button className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 flex items-center transition-all transform hover:scale-105">
                 Shop Now
                 <ArrowRight className="ml-2" size={20} />
               </button>
-              <button className="border-2 border-gray-800 text-gray-800 px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 hover:text-white transition-all">
+              </Link>
+             <Link to='/shop'> <button className="border-2 border-gray-800 text-gray-800 px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 hover:text-white transition-all">
                 Explore Collections
               </button>
+              </Link>
             </div>
             
             {/* Animated Stats */}

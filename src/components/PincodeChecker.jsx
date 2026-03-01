@@ -91,7 +91,7 @@ const PincodeChecker = ({ onPincodeValidated, selectedPincode, onPincodeChange }
         
         // Show toast based on deliverability
         if (data.data.isDeliverable) {
-          toast.success(` Deliverable to ${data.data.city}, ${data.data.state}`);
+          // toast.success(` Deliverable to ${data.data.city}, ${data.data.state}`);
         } else {
           toast.error(` Not deliverable to ${pincode}`);
         }

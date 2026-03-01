@@ -19,19 +19,13 @@ const Navbar = () => {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [recentSearches, setRecentSearches] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  
 
   const searchRef = useRef(null);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-
-  const categories = [
-    { name: 'Shirts', count: 42 },
-    { name: 'T-Shirts', count: 56 },
-    { name: 'Jeans', count: 38 },
-    { name: 'Jackets', count: 24 },
-    { name: 'Shoes', count: 67 },
-    { name: 'Accessories', count: 29 },
-  ];
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -60,6 +54,11 @@ const Navbar = () => {
     }
   }, [token]);
 
+  // Fetch categories
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   // Click outside to close suggestions
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -71,6 +70,19 @@ const Navbar = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Fetch categories
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/images/categories/list`);
+      if (res.ok) {
+        const data = await res.json();
+        setCategories(data.data || data.categories || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    }
+  };
 
   // Fetch cart count
   const fetchCartCount = async () => {
@@ -153,8 +165,7 @@ const Navbar = () => {
   };
 
   // Navigate to product
- // Navigate to product
-const navigateToProduct = (productId) => {
+ const navigateToProduct = (productId) => {
   console.log('Attempting to navigate to product:', productId);
   console.log('Product ID type:', typeof productId);
   console.log('Product ID length:', productId?.length);
@@ -260,13 +271,13 @@ const navigateToProduct = (productId) => {
               <div className="absolute top-full left-0 mt-2 w-64 bg-white shadow-2xl rounded-lg p-4 z-50">
                 {categories.map((category) => (
                   <a
-                    key={category.name}
-                    href={`/category/${category.name.toLowerCase()}`}
+                    key={category._id || category.name}
+                    href={`/category/${category.name?.toLowerCase()}`}
                     className="flex items-center justify-between py-2 px-3 hover:bg-gray-100 rounded-md"
                   >
                     <span className="font-medium">{category.name}</span>
                     <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                      {category.count}
+                      {category.count || category.productCount || 0}
                     </span>
                   </a>
                 ))}
@@ -459,52 +470,121 @@ const navigateToProduct = (productId) => {
         </div>
 
         {/* Mobile Search */}
-        <div className="md:hidden mb-4">
-          <div className="relative" ref={searchRef}>
+        <div className="md:hidden mb-4" ref={searchRef}>
+          <div className="relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               onKeyPress={handleKeyPress}
+              onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
               placeholder="Search products..."
               className="mobile-search-input w-full px-4 py-2 pl-10 rounded-lg border border-gray-300"
             />
             <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
             
             {/* Mobile Suggestions */}
-            {showSuggestions && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white shadow-2xl rounded-lg z-50 max-h-80 overflow-y-auto">
-                <div className="p-3 border-b">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Products</h3>
-                  <div className="space-y-2">
-                    {searchResults.map((product) => (
-                      <div
-                        key={product._id}
-                        onClick={() => navigateToProduct(product._id)}
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
+            {showSuggestions && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white shadow-2xl rounded-lg z-50 max-h-96 overflow-y-auto">
+                {/* Recent Searches */}
+                {searchResults.length === 0 && recentSearches.length > 0 && (
+                  <div className="p-4 border-b">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <Clock size={14} />
+                        Recent Searches
+                      </h3>
+                      <button
+                        onClick={clearRecentSearches}
+                        className="text-xs text-gray-500 hover:text-gray-700"
                       >
-                        <img
-                          src={product.signedUrl || product.url}
-                          alt={product.name}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{product.name}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                              {product.category}
-                            </span>
-                            {product.price && (
-                              <span className="text-xs font-semibold text-gray-700">
-                                ₹{product.price}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        Clear All
+                      </button>
+                    </div>
+                    <div className="space-y-1">
+                      {recentSearches.map((search, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setSearchQuery(search);
+                            handleSearch(search);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm flex items-center justify-between"
+                        >
+                          <span>{search}</span>
+                          <Clock size={12} className="text-gray-400" />
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {searchResults.length > 0 && (
+                  <>
+                    <div className="p-4 border-b">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                        Products ({searchResults.length})
+                      </h3>
+                      {loadingSearch ? (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-600"></div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {searchResults.map((product) => (
+                            <div
+                              key={product._id}
+                              onClick={() => navigateToProduct(product._id)}
+                              className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                            >
+                              <img
+                                src={product.images?.[0]?.url || product.url}
+                                alt={product.name}
+                                className="w-12 h-12 object-cover rounded"
+                                onError={(e) => {
+                                  e.target.src = 'https://via.placeholder.com/40x40?text=No+Image';
+                                }}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {product.name}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
+                                    {product.category}
+                                  </span>
+                                  {product.price && (
+                                    <span className="text-xs font-semibold text-gray-700">
+                                      ₹{product.price}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-3 border-t">
+                      <button
+                        onClick={handleSearchSubmit}
+                        className="w-full text-center text-blue-600 hover:text-blue-700 font-medium py-2"
+                      >
+                        View all results for "{searchQuery}"
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {/* No Results */}
+                {searchResults.length === 0 && searchQuery.length >= 2 && !loadingSearch && (
+                  <div className="p-8 text-center">
+                    <Package size={32} className="text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-600">No products found for "{searchQuery}"</p>
+                    <p className="text-sm text-gray-500 mt-1">Try different keywords</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -554,8 +634,8 @@ const navigateToProduct = (productId) => {
                 <div className="grid grid-cols-2 gap-2">
                   {categories.map((category) => (
                     <a
-                      key={category.name}
-                      href={`/category/${category.name.toLowerCase()}`}
+                      key={category._id || category.name}
+                      href={`/category/${category.name?.toLowerCase()}`}
                       className="text-sm py-2 px-3 bg-gray-100 hover:bg-gray-200 rounded-md"
                       onClick={() => setIsMenuOpen(false)}
                     >

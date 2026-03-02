@@ -5,13 +5,24 @@ import { CheckCircle, Package, Truck, Home, Download } from "lucide-react";
 const OrderConfirmation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { orderId, total, paymentMethod } = location.state || {};
+  const { orderId, total, paymentMethod,deliveryDate, deliveryDays } = location.state || {};
 
   useEffect(() => {
     if (!orderId) {
       navigate("/");
     }
   }, [orderId, navigate]);
+
+  const formatDeliveryDate = (date) => {
+  if (!date) return 'Calculating...';
+  const options = { 
+    weekday: 'short', 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric'
+  };
+  return new Date(date).toLocaleDateString('en-IN', options);
+};
 
   if (!orderId) {
     return null;
@@ -33,6 +44,23 @@ const OrderConfirmation = () => {
           <div className="mt-4 inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
             Order ID: {orderId}
           </div>
+          <div className="bg-white rounded-xl shadow-sm p-6">
+  <h3 className="font-semibold mb-4">Delivery Information</h3>
+  <div className="space-y-2">
+    <p className="text-sm text-gray-600">
+      Estimated Delivery: <span className="font-medium text-gray-900">
+        {deliveryDays ? `${deliveryDays} days` : 'N/A'}
+      </span>
+    </p>
+    {deliveryDate && (
+      <p className="text-sm text-gray-600">
+        Expected by: <span className="font-medium text-green-600">
+          {formatDeliveryDate(deliveryDate)}
+        </span>
+      </p>
+    )}
+  </div>
+  </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-8 mb-8">

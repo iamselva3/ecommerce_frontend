@@ -298,6 +298,32 @@ const getTimelineSteps = () => {
 };
 
 // Helper function to determine step status
+
+const getExactDeliveryDate = () => {
+  // First check if we have deliveryInfo from the order
+  if (order?.deliveryInfo?.estimatedDate) {
+    const date = new Date(order.deliveryInfo.estimatedDate);
+    return date.toLocaleDateString("en-IN", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
+  
+  // Fallback to tracking.estimatedDelivery
+  if (order?.tracking?.estimatedDelivery) {
+    const date = new Date(order.tracking.estimatedDelivery);
+    return date.toLocaleDateString("en-IN", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
+  
+  return "Calculating...";
+};
 const getStepStatus = (validStatuses) => {
   if (!order?.orderStatus) return "pending";
   
@@ -680,7 +706,7 @@ const getStepStatus = (validStatuses) => {
                   </span>
                 </div>
                 
-                {order.tracking?.trackingNumber && (
+                {/* {order.tracking?.trackingNumber && (
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Tracking Number</p>
                     <div className="flex items-center justify-between">
@@ -695,18 +721,24 @@ const getStepStatus = (validStatuses) => {
                       </button>
                     </div>
                   </div>
-                )}
+                )} */}
                 
-                {order.tracking?.courierName && (
+                {/* {order.tracking?.courierName && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Courier</span>
                     <span className="font-medium">{order.tracking.courierName}</span>
                   </div>
-                )}
+                )} */}
+                {order?.deliveryInfo?.estimatedDays && (
+  <div className="flex justify-between">
+    <span className="text-gray-600">Delivery in</span>
+    <span className="font-medium">{order.deliveryInfo.estimatedDays} days</span>
+  </div>
+)}
                 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Estimated Delivery</span>
-                  <span className="font-medium text-green-600">{getEstimatedDelivery()}</span>
+                  <span className="font-medium text-green-600 text-right">{getExactDeliveryDate()}</span>
                 </div>
               </div>
               

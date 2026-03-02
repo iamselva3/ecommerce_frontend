@@ -31,6 +31,31 @@ const mapContainerStyle = {
 
 const defaultCenter = [20.5937, 78.9629]; // Default to India center [lat, lng]
 
+
+const calculateDeliveryDate = (deliveryDays) => {
+  if (!deliveryDays) return null;
+  
+  const today = new Date();
+  const deliveryDate = new Date(today);
+  deliveryDate.setDate(today.getDate() + deliveryDays);
+  
+  return deliveryDate;
+};
+
+
+const formatDeliveryDate = (date) => {
+  if (!date) return '';
+  
+  const options = { 
+    weekday: 'short', 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric'
+  };
+  
+  return date.toLocaleDateString('en-IN', options);
+};
+
 // Component for handling map clicks
 function LocationMarker({ position, setPosition }) {
   const map = useMapEvents({
@@ -63,12 +88,23 @@ const PincodeChecker = ({ onPincodeValidated, selectedPincode, onPincodeChange }
   const [locationLoading, setLocationLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
+  const [deliveryDate, setDeliveryDate] = useState(null);
 
   useEffect(() => {
     if (selectedPincode) {
       setPincode(selectedPincode);
     }
   }, [selectedPincode]);
+
+  // Update delivery date when pincodeData changes
+  useEffect(() => {
+    if (pincodeData?.deliveryDays) {
+      const date = calculateDeliveryDate(pincodeData.deliveryDays);
+      setDeliveryDate(date);
+    } else {
+      setDeliveryDate(null);
+    }
+  }, [pincodeData]);
 
   const handleCheckPincode = async () => {
     if (!pincode || pincode.length !== 6) {
@@ -304,7 +340,7 @@ const PincodeChecker = ({ onPincodeValidated, selectedPincode, onPincodeChange }
               <p className={`font-semibold ${
                 pincodeData.isDeliverable ? 'text-green-800' : 'text-red-800'
               }`}>
-                {pincodeData.isDeliverable ? '✓ Deliverable' : '✗ Not Deliverable'}
+                {pincodeData.isDeliverable ? 'Deliverable' : 'Not Deliverable'}
               </p>
               
               {pincodeData.isDeliverable ? (
@@ -314,10 +350,20 @@ const PincodeChecker = ({ onPincodeValidated, selectedPincode, onPincodeChange }
                   </p>
                   
                   <div className="mt-3 space-y-2 text-sm">
-                    <div className="flex justify-between">
+                    {/* <div className="flex justify-between">
                       <span className="text-gray-600">Estimated Delivery:</span>
                       <span className="font-medium">{pincodeData.deliveryDays} days</span>
-                    </div>
+                    </div> */}
+                    
+                    
+                    {deliveryDate && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Expected by:</span>
+                        <span className="font-medium text-green-600">
+                          {formatDeliveryDate(deliveryDate)}
+                        </span>
+                      </div>
+                    )}
                     
                     <div className="flex justify-between">
                       <span className="text-gray-600">Cash on Delivery:</span>

@@ -235,44 +235,43 @@ const CategoryPage = () => {
                     ₹{item.price}
                   </p>
 
-                  <div className="mt-auto flex gap-2 pt-4">
-                    {isInCart ? (
-                      <button
-                        disabled
-                        className="flex-1 bg-gray-400 text-black py-2 rounded-lg flex items-center justify-center gap-2 cursor-default"
-                      >
-                        {/* <Check size={18} /> */}
-                        In Cart
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleAddToCart(item)}
-                        disabled={isLoading}
-                        className={`flex-1 border py-2 rounded-lg hover:bg-black hover:text-white transition flex items-center justify-center gap-2 ${
-                          isLoading ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
-                      >
-                        {isLoading ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-current"></div>
-                            Adding...
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingBag size={16} />
-                            Add to Cart
-                          </>
-                        )}
-                      </button>
-                    )}
+                  <div className="mt-auto flex gap-2 ">
+  {isInCart ? (
+    <button
+      disabled
+      className="flex-1 bg-gray-400 text-black py-2 rounded-lg cursor-default font-medium min-w-[100px]"
+    >
+      In Cart
+    </button>
+  ) : (
+    <button
+      onClick={() => handleAddToCart(item)}
+      disabled={isLoading}
+      className={`flex-1 border py-2 rounded-lg hover:bg-black hover:text-white transition font-medium min-w-[100px] ${
+        isLoading ? "opacity-50 cursor-not-allowed" : ""
+      }`}
+    >
+      {isLoading ? (
+        <div className="flex items-center justify-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-current"></div>
+          <span>Adding...</span>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center gap-2">
+          <ShoppingBag size={16} />
+          <span>Add to Cart</span>
+        </div>
+      )}
+    </button>
+  )}
 
-                    <button
-                      onClick={() => handleBuyNow(item)}
-                      className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-                    >
-                      Buy Now
-                    </button>
-                  </div>
+  <button
+    onClick={() => handleBuyNow(item)}
+    className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium min-w-[100px]"
+  >
+    Buy Now
+  </button>
+</div>
                 </div>
               );
             })}

@@ -29,7 +29,8 @@ const CheckoutPage = () => {
 
   const [isPincodeValidated, setIsPincodeValidated] = useState(false);
 const [validatedPincodeData, setValidatedPincodeData] = useState(null);
-console.log("dyusdu",isPincodeValidated)
+const [deliveryDate, setDeliveryDate] = useState(null);
+
 
 // Add this import at the top
 
@@ -37,6 +38,13 @@ console.log("dyusdu",isPincodeValidated)
 const handlePincodeValidated = (pincodeData) => {
   setValidatedPincodeData(pincodeData);
   setIsPincodeValidated(true);
+
+   if (pincodeData?.deliveryDays) {
+    const today = new Date();
+    const estimatedDate = new Date(today);
+    estimatedDate.setDate(today.getDate() + pincodeData.deliveryDays);
+    setDeliveryDate(estimatedDate);
+  }
 };
 
 // Update your handlePlaceOrder function to check pincode validation
@@ -280,6 +288,12 @@ const placeOrderCOD = async () => {
       },
       
       paymentMethod: paymentMethod,
+
+       deliveryInfo: {
+        estimatedDays: validatedPincodeData?.deliveryDays,
+        estimatedDate: deliveryDate,
+        codAvailable: validatedPincodeData?.codAvailable,
+      },
       
       isDirectBuy: cart?.isDirectBuy || false,
       notes: '',
@@ -321,6 +335,8 @@ const placeOrderCOD = async () => {
         orderId: responseData.data?.orderId || responseData.orderId,
         total: responseData.data?.totalAmount || 0,
         paymentMethod: "cod",
+         deliveryDate: deliveryDate,
+        deliveryDays: validatedPincodeData?.deliveryDays,
       },
     });
   } catch (error) {

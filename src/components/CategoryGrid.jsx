@@ -16,7 +16,6 @@ const CategoryGrid = () => {
       try {
         const res = await fetch(`${API_URL}/api/images/categories/list`);
         const data = await res.json();
-        console.log(data);
         setCategories(data.data);
       } catch (err) {
         console.error("Failed to fetch categories", err);
@@ -49,6 +48,7 @@ const CategoryGrid = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
           {categories.map((category) => (
            <Link
+            key={category._id || category.id || category.name}
   to={`/category/${category.slug || category.name.toLowerCase()}`}
   className="group relative overflow-hidden rounded-2xl bg-gray-50 p-6 hover:shadow-xl transition-all"
 >

@@ -9,7 +9,6 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const CheckoutPage = () => {
   const [cart, setCart] = useState(null);
-  console.log("cart",cart)
   const [loading, setLoading] = useState(true);
   const [selectedSizes, setSelectedSizes] = useState({});
   const [address, setAddress] = useState({
@@ -358,6 +357,11 @@ const navigateToPaymentPage = () => {
     delivery: calculateDelivery(),
     total: calculateTotal(),
     isDirectBuy: cart?.isDirectBuy || false,
+    deliveryInfo: {
+      estimatedDays: validatedPincodeData?.deliveryDays,
+      estimatedDate: deliveryDate,
+      codAvailable: validatedPincodeData?.codAvailable,
+    },
   };
 
   // Navigate to appropriate payment page

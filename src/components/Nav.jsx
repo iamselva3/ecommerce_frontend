@@ -166,9 +166,7 @@ const Navbar = () => {
 
   // Navigate to product
  const navigateToProduct = (productId) => {
-  console.log('Attempting to navigate to product:', productId);
-  console.log('Product ID type:', typeof productId);
-  console.log('Product ID length:', productId?.length);
+  
   
   // Validate productId
   if (!productId || productId === 'undefined' || productId === 'null') {
@@ -185,7 +183,6 @@ const Navbar = () => {
   }
   
   try {
-    console.log('Navigating to:', `/product/${cleanProductId}`);
     navigate(`/product/${cleanProductId}`);
     setShowSuggestions(false);
     setSearchQuery('');
@@ -362,12 +359,10 @@ const Navbar = () => {
         onMouseDown={(e) => {
           e.preventDefault(); 
           e.stopPropagation();
-          console.log('Mouse down on product:', product._id);
           navigateToProduct(product._id);
         }}
         onTouchStart={(e) => {
           e.preventDefault();
-          console.log('Touch start on product:', product._id);
           navigateToProduct(product._id);
         }}
         className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors active:bg-gray-200 select-none"

@@ -438,12 +438,6 @@ const ShopPage = () => {
         ))}
       </div>
 
-      {/* Add custom scrollbar hide styles */}
-      <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </div>
   );
 };

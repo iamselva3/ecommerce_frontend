@@ -81,7 +81,6 @@ function LocationMarker({ position, setPosition }) {
 
 const PincodeChecker = ({ onPincodeValidated, selectedPincode, onPincodeChange }) => {
   const [pincode, setPincode] = useState(selectedPincode || '');
-  console.log("suiauid", pincode);
   const [checking, setChecking] = useState(false);
   const [pincodeData, setPincodeData] = useState(null);
   const [showMapModal, setShowMapModal] = useState(false);

@@ -13,7 +13,7 @@ const PaymentPage = () => {
   const { orderData } = location.state || {};
   const [loading, setLoading] = useState(false);
   
-  // State for card payment
+  
   const [cardDetails, setCardDetails] = useState({
     cardNumber: "",
     cardHolder: "",
@@ -159,6 +159,11 @@ const upiApps = [
           color: null,
           image: item.image,
         })),
+         deliveryInfo: {
+        estimatedDays: orderData?.deliveryInfo?.estimatedDays,
+        estimatedDate: orderData?.deliveryInfo?.estimatedDate,
+        codAvailable: orderData?.deliveryInfo?.codAvailable,
+      },
         
         shippingAddress: orderData.address,
         paymentMethod: paymentMethod,

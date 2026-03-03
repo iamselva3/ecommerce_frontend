@@ -9,7 +9,6 @@ const OrdersListPage = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  console.log("dusdgy",orders)
 
   useEffect(() => {
     if (!token) {

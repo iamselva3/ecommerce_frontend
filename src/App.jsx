@@ -44,6 +44,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicyPage";
 import Sitemap from "./pages/SItemapPage";
 import TermsOfService from "./pages/TermsServicePage";
 import ShippingInfo from "./pages/ShippingInfo";
+import Aiassistent from "./components/Aiassistent";
 
 const Home = () => (
   <>
@@ -62,6 +63,8 @@ const Home = () => (
       </div>
       <FeaturedProducts />
     </div>
+
+    <Aiassistent />
   </>
 );
 

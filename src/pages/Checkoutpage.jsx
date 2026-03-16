@@ -1,16 +1,43 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Trash2, Plus, Minus, ArrowLeft, Check } from "lucide-react";
+import { Trash2, Plus, Minus, ArrowLeft, Check, Home, MapPin, Building, ChevronDown } from "lucide-react";
 import LogoLoader from "../components/LogoLoader";
 import PincodeChecker from '../components/PincodeChecker';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const formatSizeForDisplay = (size, category) => {
+  if (!size) return size;
+  const isShoe = category?.toLowerCase() === "shoes" || category?.toLowerCase() === "shoe";
+  if (isShoe) {
+    const shoeSizeMap = {
+      'xs': '6',
+      's': '7',
+      'm': '8',
+      'l': '9',
+      'xl': '10',
+      'xxl': '11',
+      'xs/s': '6/7',
+      's/m': '7/8',
+      'm/l': '8/9',
+      'l/xl': '9/10',
+      'xl/xxl': '10/11'
+    };
+    const normalizedSize = String(size).toLowerCase();
+    return shoeSizeMap[normalizedSize] || size;
+  }
+  return String(size).toUpperCase();
+};
+
 const CheckoutPage = () => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [selectedSizes, setSelectedSizes] = useState({});
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [showAddressForm, setShowAddressForm] = useState(false);
   const [address, setAddress] = useState({
     fullName: "",
     phone: "",
@@ -19,38 +46,31 @@ const CheckoutPage = () => {
     state: "",
     street: "",
     landmark: "",
+    addressType: "home",
   });
   const [paymentMethod, setPaymentMethod] = useState("cod");
 
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const [isPincodeValidated, setIsPincodeValidated] = useState(false);
-const [validatedPincodeData, setValidatedPincodeData] = useState(null);
-const [deliveryDate, setDeliveryDate] = useState(null);
+  const [validatedPincodeData, setValidatedPincodeData] = useState(null);
+  const [deliveryDate, setDeliveryDate] = useState(null);
 
+  const handlePincodeValidated = (pincodeData) => {
+    setValidatedPincodeData(pincodeData);
+    setIsPincodeValidated(true);
 
-// Add this import at the top
+    if (pincodeData?.deliveryDays) {
+      const today = new Date();
+      const estimatedDate = new Date(today);
+      estimatedDate.setDate(today.getDate() + pincodeData.deliveryDays);
+      setDeliveryDate(estimatedDate);
+    }
+  };
 
-// Add this callback function
-const handlePincodeValidated = (pincodeData) => {
-  setValidatedPincodeData(pincodeData);
-  setIsPincodeValidated(true);
-
-   if (pincodeData?.deliveryDays) {
-    const today = new Date();
-    const estimatedDate = new Date(today);
-    estimatedDate.setDate(today.getDate() + pincodeData.deliveryDays);
-    setDeliveryDate(estimatedDate);
-  }
-};
-
-// Update your handlePlaceOrder function to check pincode validation
-// const handlePlaceOrder = async () => {
-
-// }
-  // Check if this is direct buy (not from cart)
   const directProduct = location.state?.directProduct;
 
   useEffect(() => {
@@ -59,8 +79,9 @@ const handlePincodeValidated = (pincodeData) => {
       return;
     }
 
+    fetchSavedAddresses();
+
     if (directProduct) {
-      // Handle direct buy - create a single-item cart
       const singleItemCart = {
         items: [
           {
@@ -69,10 +90,8 @@ const handlePincodeValidated = (pincodeData) => {
             price: directProduct.price,
             image: directProduct.image,
             qty: directProduct.qty || 1,
-            // sizes: ["S", "M", "L", "XL"],
-            sizes:directProduct.sizes,
-            category: "products",
-            // availableSizes: ["S", "M", "L", "XL"],
+            sizes: directProduct.sizes,
+            category: directProduct.category || "products",
           },
         ],
         isDirectBuy: true,
@@ -80,7 +99,6 @@ const handlePincodeValidated = (pincodeData) => {
       setCart(singleItemCart);
       setLoading(false);
     } else {
-      // Normal cart checkout - fetch from API
       const fetchCart = async () => {
         try {
           const res = await fetch(`${API_URL}/api/cart`, {
@@ -94,13 +112,12 @@ const handlePincodeValidated = (pincodeData) => {
           const data = await res.json();
           const cartData = data.data || data;
           
-          // Initialize selected sizes for each item
           const initialSizes = {};
           cartData.items?.forEach((item) => {
             if (item.sizes?.length > 0) {
               initialSizes[item.productId] = item.sizes[0];
             } else {
-              initialSizes[item.productId] = "M"; // Default size
+              initialSizes[item.productId] = "M";
             }
           });
           
@@ -118,12 +135,114 @@ const handlePincodeValidated = (pincodeData) => {
     }
   }, [token, navigate, directProduct]);
 
-  // Handle quantity change
+  const fetchSavedAddresses = async () => {
+    try {
+      setLoadingAddresses(true);
+      const res = await fetch(`${API_URL}/api/addresses`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const addresses = data.data || [];
+        setSavedAddresses(addresses);
+        
+        const defaultAddress = addresses.find(addr => addr.isDefault);
+        if (defaultAddress) {
+          setSelectedAddressId(defaultAddress._id);
+          setAddress({
+            fullName: defaultAddress.name || "",
+            phone: defaultAddress.phone || "",
+            pincode: defaultAddress.pincode || "",
+            city: defaultAddress.city || "",
+            state: defaultAddress.state || "",
+            street: defaultAddress.street || "",
+            landmark: defaultAddress.landmark || "",
+            addressType: defaultAddress.addressType || "home",
+          });
+          setIsPincodeValidated(false);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch addresses:", error);
+    } finally {
+      setLoadingAddresses(false);
+    }
+  };
+
+  const handleSelectAddress = (address) => {
+    setSelectedAddressId(address._id);
+    setAddress({
+      fullName: address.name || "",
+      phone: address.phone || "",
+      pincode: address.pincode || "",
+      city: address.city || "",
+      state: address.state || "",
+      street: address.street || "",
+      landmark: address.landmark || "",
+      addressType: address.addressType || "home",
+    });
+    setIsPincodeValidated(false);
+  };
+
+  const handleAddNewAddress = () => {
+    setSelectedAddressId(null);
+    setAddress({
+      fullName: user.name || "",
+      phone: "",
+      pincode: "",
+      city: "",
+      state: "",
+      street: "",
+      landmark: "",
+      addressType: "home",
+    });
+    setShowAddressForm(true);
+  };
+
+  const handleAddressChange = (e) => {
+    const { name, value } = e.target;
+    setAddress((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    
+    if (name === 'pincode') {
+      setIsPincodeValidated(false);
+      setValidatedPincodeData(null);
+    }
+  };
+
+  const validateAddress = () => {
+    const requiredFields = ["fullName", "phone", "pincode", "city", "state", "street"];
+    for (const field of requiredFields) {
+      if (!address[field]?.trim()) {
+        toast.error(`Please fill in ${field.replace(/([A-Z])/g, " $1").toLowerCase()}`);
+        return false;
+      }
+    }
+    if (address.phone.length < 10) {
+      toast.error("Please enter a valid phone number");
+      return false;
+    }
+    if (address.pincode.length !== 6) {
+      toast.error("Please enter a valid 6-digit pincode");
+      return false;
+    }
+    return true;
+  };
+
+  const validateSizes = () => {
+    if (!cart?.items) return false;
+    return cart.items.every((item) => selectedSizes[item.productId]);
+  };
+
   const handleQuantityChange = async (productId, newQty) => {
     if (newQty < 1) return;
 
     if (cart?.isDirectBuy) {
-      // Update quantity for direct buy
       setCart((prev) => ({
         ...prev,
         items: prev.items.map((item) =>
@@ -131,7 +250,6 @@ const handlePincodeValidated = (pincodeData) => {
         ),
       }));
     } else {
-      // Update quantity via API
       try {
         const res = await fetch(`${API_URL}/api/cart`, {
           method: "PUT",
@@ -148,7 +266,6 @@ const handlePincodeValidated = (pincodeData) => {
         if (res.ok) {
           const updatedCart = await res.json();
           setCart(updatedCart.data || updatedCart);
-          // toast.success("Quantity updated");
         }
       } catch (error) {
         toast.error("Failed to update quantity");
@@ -156,10 +273,9 @@ const handlePincodeValidated = (pincodeData) => {
     }
   };
 
-  // Remove item from cart
   const handleRemoveItem = async (productId) => {
     if (cart?.isDirectBuy) {
-      navigate("/shop"); // Go back to shop if removing from direct buy
+      navigate("/shop");
       return;
     }
 
@@ -181,198 +297,139 @@ const handlePincodeValidated = (pincodeData) => {
     }
   };
 
-  // Handle address change
-  // Handle address change
-const handleAddressChange = (e) => {
-  const { name, value } = e.target;
-  setAddress((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
-  
-  // If pincode field changes, reset validation
-  if (name === 'pincode') {
-    setIsPincodeValidated(false);
-    setValidatedPincodeData(null);
-  }
-};
-
-  // Validate address
-  const validateAddress = () => {
-    const requiredFields = ["fullName", "phone", "pincode", "city", "state", "street"];
-    for (const field of requiredFields) {
-      if (!address[field]?.trim()) {
-        toast.error(`Please fill in ${field.replace(/([A-Z])/g, " $1").toLowerCase()}`);
-        return false;
-      }
-    }
-    if (address.phone.length < 10) {
-      toast.error("Please enter a valid phone number");
-      return false;
-    }
-    if (address.pincode.length !== 6) {
-      toast.error("Please enter a valid 6-digit pincode");
-      return false;
-    }
-    return true;
-  };
-
-  // Validate all items have size selected
-  const validateSizes = () => {
-    if (!cart?.items) return false;
-
-    return cart.items.every((item) => selectedSizes[item.productId]);
-  };
-
-  // Place order
-const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async () => {
     if (!validateAddress()) return;
   
-  if (!validateSizes()) {
-    toast.error("Please select size for all items");
-    return;
-  }
+    if (!validateSizes()) {
+      toast.error("Please select size for all items");
+      return;
+    }
 
-  
-  if (!isPincodeValidated || !validatedPincodeData?.isDeliverable) {
-    toast.error("Please check delivery availability for your pincode first");
-    return;
-  }
+    if (!isPincodeValidated || !validatedPincodeData?.isDeliverable) {
+      toast.error("Please check delivery availability for your pincode first");
+      return;
+    }
 
- 
-  if (paymentMethod === "cod" && !validatedPincodeData?.codAvailable) {
-    toast.error("Cash on Delivery is not available at your location. Please choose another payment method.");
-    return;
-  }
+    if (paymentMethod === "cod" && !validatedPincodeData?.codAvailable) {
+      toast.error("Cash on Delivery is not available at your location. Please choose another payment method.");
+      return;
+    }
 
-  
-  if (!validateSizes()) {
-    toast.error("Please select size for all items");
-    return;
-  }
+    if (!validateSizes()) {
+      toast.error("Please select size for all items");
+      return;
+    }
 
-  // For COD - place order directly
-  if (paymentMethod === "cod") {
-    await placeOrderCOD();
-  } 
-  // For Card/UPI - redirect to payment page
-  else if (paymentMethod === "card" || paymentMethod === "upi") {
-    navigateToPaymentPage();
-  }
-};
+    if (paymentMethod === "cod") {
+      await placeOrderCOD();
+    } else if (paymentMethod === "card" || paymentMethod === "upi") {
+      navigateToPaymentPage();
+    }
+  };
 
-// Function to place COD order
-const placeOrderCOD = async () => {
-  try {
-    const orderData = {
-      items: cart.items.map((item) => ({
-        productId: item.productId,
-        name: item.name,
-        price: item.price,
-        quantity: item.qty,
-        size: selectedSizes[item.productId] || null,
-        color: null, // Change from "no" to null
-        image: item.image,
-      })),
+  const placeOrderCOD = async () => {
+    try {
+      const orderData = {
+        items: cart.items.map((item) => ({
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.qty,
+          size: selectedSizes[item.productId] || null,
+          color: null,
+          image: item.image,
+        })),
+        
+        shippingAddress: {
+          fullName: address.fullName,
+          phone: address.phone,
+          street: address.street,
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+          country: 'India',
+          landmark: address.landmark || '',
+        },
+        
+        paymentMethod: paymentMethod,
+
+        deliveryInfo: {
+          estimatedDays: validatedPincodeData?.deliveryDays,
+          estimatedDate: deliveryDate,
+          codAvailable: validatedPincodeData?.codAvailable,
+        },
+        
+        isDirectBuy: cart?.isDirectBuy || false,
+        notes: '',
+        discount: 0,
+      };
+
+      const res = await fetch(`${API_URL}/api/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const responseData = await res.json();
+
+      if (!res.ok) {
+        throw new Error(responseData.message || "Failed to place order");
+      }
+
+      if (!cart?.isDirectBuy) {
+        await fetch(`${API_URL}/api/cart/clear`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+
+      toast.success("Order placed successfully!");
       
-      shippingAddress: {
-        fullName: address.fullName,
-        phone: address.phone,
-        street: address.street,
-        city: address.city,
-        state: address.state,
-        pincode: address.pincode,
-        country: 'India',
-        landmark: address.landmark || '',
-      },
-      
-      paymentMethod: paymentMethod,
+      navigate("/order-confirmation", {
+        state: {
+          orderId: responseData.data?.orderId || responseData.orderId,
+          total: responseData.data?.totalAmount || 0,
+          paymentMethod: "cod",
+          deliveryDate: deliveryDate,
+          deliveryDays: validatedPincodeData?.deliveryDays,
+        },
+      });
+    } catch (error) {
+      console.error("Order error:", error);
+      toast.error(error.message || "Failed to place order. Please try again.");
+    }
+  };
 
-       deliveryInfo: {
+  const navigateToPaymentPage = () => {
+    const paymentOrderData = {
+      items: cart.items,
+      selectedSizes,
+      address,
+      paymentMethod,
+      subtotal: calculateSubtotal(),
+      gst: calculateGST(),
+      delivery: calculateDelivery(),
+      total: calculateTotal(),
+      isDirectBuy: cart?.isDirectBuy || false,
+      deliveryInfo: {
         estimatedDays: validatedPincodeData?.deliveryDays,
         estimatedDate: deliveryDate,
         codAvailable: validatedPincodeData?.codAvailable,
       },
-      
-      isDirectBuy: cart?.isDirectBuy || false,
-      notes: '',
-      discount: 0,
     };
 
-    console.log("Sending order data:", JSON.stringify(orderData, null, 2));
-
-    const res = await fetch(`${API_URL}/api/orders`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(orderData),
-    });
-
-    const responseData = await res.json();
-    console.log("Order response:", responseData);
-
-    if (!res.ok) {
-      throw new Error(responseData.message || "Failed to place order");
-    }
-
-    // Clear cart if not direct buy
-    if (!cart?.isDirectBuy) {
-      await fetch(`${API_URL}/api/cart/clear`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    }
-
-    toast.success("🎉 Order placed successfully!");
-    
-    navigate("/order-confirmation", {
+    navigate("/payment", {
       state: {
-        orderId: responseData.data?.orderId || responseData.orderId,
-        total: responseData.data?.totalAmount || 0,
-        paymentMethod: "cod",
-         deliveryDate: deliveryDate,
-        deliveryDays: validatedPincodeData?.deliveryDays,
+        orderData: paymentOrderData,
       },
     });
-  } catch (error) {
-    console.error("Order error:", error);
-    toast.error(error.message || "Failed to place order. Please try again.");
-  }
-};
-
-// Function to navigate to payment page
-const navigateToPaymentPage = () => {
-  // Prepare order data to pass to payment page
-  const paymentOrderData = {
-    items: cart.items,
-    selectedSizes,
-    address,
-    paymentMethod,
-    subtotal: calculateSubtotal(),
-    gst: calculateGST(),
-    delivery: calculateDelivery(),
-    total: calculateTotal(),
-    isDirectBuy: cart?.isDirectBuy || false,
-    deliveryInfo: {
-      estimatedDays: validatedPincodeData?.deliveryDays,
-      estimatedDate: deliveryDate,
-      codAvailable: validatedPincodeData?.codAvailable,
-    },
   };
 
-  // Navigate to appropriate payment page
-  navigate("/payment", {
-    state: {
-      orderData: paymentOrderData,
-    },
-  });
-};
-
-  // Calculate totals
   const calculateSubtotal = () => {
     if (!cart?.items) return 0;
     return cart.items.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -394,10 +451,7 @@ const navigateToPaymentPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          {/* <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div> */}
-          
-            <LogoLoader />
-          
+          <LogoLoader />
         </div>
       </div>
     );
@@ -436,7 +490,6 @@ const navigateToPaymentPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4">
-        {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => navigate(-1)}
@@ -454,9 +507,7 @@ const navigateToPaymentPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Items & Address */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Order Items */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">
                 Order Items ({cart.items.length})
@@ -468,14 +519,12 @@ const navigateToPaymentPage = () => {
                     key={item.productId}
                     className="flex gap-4 pb-6 border-b last:border-0 last:pb-0"
                   >
-                    {/* Product Image */}
                     <img
                       src={item.image}
                       alt={item.name}
                       className="w-24 h-24 object-cover rounded-lg"
                     />
 
-                    {/* Product Details */}
                     <div className="flex-1">
                       <div className="flex justify-between">
                         <div>
@@ -497,7 +546,6 @@ const navigateToPaymentPage = () => {
                         )}
                       </div>
 
-                      {/* Price */}
                       <div className="mt-2">
                         <span className="text-lg font-bold text-gray-900">
                           ₹{item.price.toLocaleString()}
@@ -507,7 +555,6 @@ const navigateToPaymentPage = () => {
                         </span>
                       </div>
 
-                      {/* Size Selection */}
                       <div className="mt-4">
                         <p className="text-sm font-medium text-gray-700 mb-2">
                           Select Size:
@@ -531,7 +578,7 @@ const navigateToPaymentPage = () => {
                                   }
                                 `}
                               >
-                                {size}
+                                {formatSizeForDisplay(size, item.category)}
                                 {selectedSizes[item.productId] === size && (
                                   <Check size={12} className="inline ml-1" />
                                 )}
@@ -541,7 +588,6 @@ const navigateToPaymentPage = () => {
                         </div>
                       </div>
 
-                      {/* Quantity Controls */}
                       <div className="flex items-center gap-4 mt-4">
                         <div className="flex items-center border rounded-lg">
                           <button
@@ -573,132 +619,230 @@ const navigateToPaymentPage = () => {
               </div>
             </div>
 
-            {/* Shipping Address */}
             <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">
-                Shipping Address
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={address.fullName}
-                    onChange={handleAddressChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter your full name"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={address.phone}
-                    onChange={handleAddressChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="10-digit mobile number"
-                    maxLength="10"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Pincode *
-                  </label>
-                  <input
-                    type="text"
-                    name="pincode"
-                    value={address.pincode}
-                    onChange={handleAddressChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="6-digit pincode"
-                    maxLength="6"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    City *
-                  </label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={address.city}
-                    onChange={handleAddressChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter city"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    State *
-                  </label>
-                  <input
-                    type="text"
-                    name="state"
-                    value={address.state}
-                    onChange={handleAddressChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter state"
-                    required
-                  />
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Street Address *
-                  </label>
-                  <textarea
-                    name="street"
-                    value={address.street}
-                    onChange={handleAddressChange}
-                    rows="2"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="House no., Building, Street, Area"
-                    required
-                  />
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Landmark (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    name="landmark"
-                    value={address.landmark}
-                    onChange={handleAddressChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nearby landmark"
-                  />
-                </div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Shipping Address
+                </h2>
+                {!showAddressForm && savedAddresses.length > 0 && (
+                  <button
+                    onClick={handleAddNewAddress}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    + Add New Address
+                  </button>
+                )}
               </div>
+
+              {loadingAddresses ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <>
+                  {!showAddressForm && savedAddresses.length > 0 && (
+                    <div className="mb-6 space-y-3">
+                      {savedAddresses.map((savedAddr) => (
+                        <div
+                          key={savedAddr._id}
+                          onClick={() => handleSelectAddress(savedAddr)}
+                          className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                            selectedAddressId === savedAddr._id
+                              ? "border-blue-600 bg-blue-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-3">
+                              <div className={`p-2 rounded-lg ${
+                                savedAddr.addressType === "home" ? "bg-green-100" : "bg-purple-100"
+                              }`}>
+                                {savedAddr.addressType === "home" ? (
+                                  <Home size={20} className="text-green-600" />
+                                ) : (
+                                  <Building size={20} className="text-purple-600" />
+                                )}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold">{savedAddr.name}</span>
+                                  {savedAddr.isDefault && (
+                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                                      Default
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {savedAddr.street}, {savedAddr.city}, {savedAddr.state} - {savedAddr.pincode}
+                                </p>
+                                <p className="text-sm text-gray-500 mt-1">Phone: {savedAddr.phone}</p>
+                              </div>
+                            </div>
+                            {selectedAddressId === savedAddr._id && (
+                              <Check size={20} className="text-blue-600" />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {(showAddressForm || savedAddresses.length === 0) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          name="fullName"
+                          value={address.fullName}
+                          onChange={handleAddressChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Enter your full name"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Phone Number *
+                        </label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={address.phone}
+                          onChange={handleAddressChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="10-digit mobile number"
+                          maxLength="10"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Pincode *
+                        </label>
+                        <input
+                          type="text"
+                          name="pincode"
+                          value={address.pincode}
+                          onChange={handleAddressChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="6-digit pincode"
+                          maxLength="6"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          City *
+                        </label>
+                        <input
+                          type="text"
+                          name="city"
+                          value={address.city}
+                          onChange={handleAddressChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Enter city"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          State *
+                        </label>
+                        <input
+                          type="text"
+                          name="state"
+                          value={address.state}
+                          onChange={handleAddressChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Enter state"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Address Type
+                        </label>
+                        <select
+                          name="addressType"
+                          value={address.addressType}
+                          onChange={handleAddressChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="home">Home</option>
+                          <option value="work">Work</option>
+                        </select>
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Street Address *
+                        </label>
+                        <textarea
+                          name="street"
+                          value={address.street}
+                          onChange={handleAddressChange}
+                          rows="2"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="House no., Building, Street, Area"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Landmark (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          name="landmark"
+                          value={address.landmark}
+                          onChange={handleAddressChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Nearby landmark"
+                        />
+                      </div>
+
+                      {savedAddresses.length > 0 && (
+                        <div className="md:col-span-2 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowAddressForm(false);
+                              const defaultAddr = savedAddresses.find(addr => addr.isDefault);
+                              if (defaultAddr) {
+                                handleSelectAddress(defaultAddr);
+                              }
+                            }}
+                            className="text-sm text-gray-600 hover:text-gray-800"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             <div className="mt-8">
-  <PincodeChecker
-     onPincodeValidated={handlePincodeValidated}
-    selectedPincode={address.pincode}
-    onPincodeChange={(newPincode) => {
-      setAddress(prev => ({ ...prev, pincode: newPincode }));
-    }}
-  />
-</div>
+              <PincodeChecker
+                onPincodeValidated={handlePincodeValidated}
+                selectedPincode={address.pincode}
+                onPincodeChange={(newPincode) => {
+                  setAddress(prev => ({ ...prev, pincode: newPincode }));
+                }}
+              />
+            </div>
 
-            {/* Payment Method */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">
                 Payment Method
@@ -759,7 +903,6 @@ const navigateToPaymentPage = () => {
             </div>
           </div>
 
-          {/* Right Column - Order Summary */}
           <div className="lg:col-span-1">
             <div className="sticky top-24">
               <div className="bg-white rounded-xl shadow-sm p-6">
@@ -799,25 +942,25 @@ const navigateToPaymentPage = () => {
                     </p>
                   </div>
                   
-                 <button
-  onClick={handlePlaceOrder}
-  disabled={!validateSizes()}
-  className={`w-full py-4 rounded-lg font-bold text-white transition-all mt-6
-    ${
-      validateSizes() 
-        ? "bg-black hover:bg-gray-800 active:scale-[0.98]"
-        : "bg-gray-300 cursor-not-allowed"
-    }
-  `}
->
-  { !validateSizes() ? (
-    "Select Sizes First"
-  ) : paymentMethod === "cod" ? (
-    "Place Order (Cash on Delivery)"
-  ) : (
-    "Proceed to Payment"
-  )}
-</button>
+                  <button
+                    onClick={handlePlaceOrder}
+                    disabled={!validateSizes()}
+                    className={`w-full py-4 rounded-lg font-bold text-white transition-all mt-6
+                      ${
+                        validateSizes() 
+                          ? "bg-black hover:bg-gray-800 active:scale-[0.98]"
+                          : "bg-gray-300 cursor-not-allowed"
+                      }
+                    `}
+                  >
+                    { !validateSizes() ? (
+                      "Select Sizes First"
+                    ) : paymentMethod === "cod" ? (
+                      "Place Order (Cash on Delivery)"
+                    ) : (
+                      "Proceed to Payment"
+                    )}
+                  </button>
                   
                   <p className="text-xs text-center text-gray-500 mt-4">
                     By placing your order, you agree to our Terms of Service and Privacy Policy.
@@ -825,7 +968,6 @@ const navigateToPaymentPage = () => {
                 </div>
               </div>
               
-              {/* Secure Checkout Badge */}
               <div className="mt-4 bg-blue-50 border border-blue-100 rounded-lg p-4">
                 <div className="flex items-center">
                   <div className="text-blue-600 mr-3">🔒</div>
@@ -845,4 +987,4 @@ const navigateToPaymentPage = () => {
   );
 };
 
-export default CheckoutPage;
+export default CheckoutPage;  

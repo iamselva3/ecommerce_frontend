@@ -27,7 +27,6 @@ const UserProfile = () => {
   const [editingPayment, setEditingPayment] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Editable fields
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -41,7 +40,6 @@ const UserProfile = () => {
     },
   });
 
-  // Address form state
   const [addressForm, setAddressForm] = useState({
     name: "",
     phone: "",
@@ -54,7 +52,6 @@ const UserProfile = () => {
     isDefault: false
   });
 
-  // Payment form state
   const [paymentForm, setPaymentForm] = useState({
     type: "card",
     cardDetails: {
@@ -73,7 +70,6 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  // Auth guard
   useEffect(() => {
     if (!token) {
       navigate("/login");
@@ -81,7 +77,6 @@ const UserProfile = () => {
     }
   }, [token, navigate]);
 
-  // Fetch user profile
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -118,7 +113,6 @@ const UserProfile = () => {
     if (token) fetchProfile();
   }, [token]);
 
-  // Fetch orders
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -135,7 +129,6 @@ const UserProfile = () => {
     if (token) fetchOrders();
   }, [token]);
 
-  // Fetch wishlist
   useEffect(() => {
     const fetchWishlist = async () => {
       try {
@@ -152,7 +145,6 @@ const UserProfile = () => {
     if (token) fetchWishlist();
   }, [token]);
 
-  // Fetch addresses and payment methods
   useEffect(() => {
     if (token) {
       fetchAddresses();
@@ -166,9 +158,7 @@ const UserProfile = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.success) {
-        setAddresses(data.data || []);
-      }
+      setAddresses(data.data || []);
     } catch (err) {
       console.error("Failed to fetch addresses:", err);
     }
@@ -180,15 +170,12 @@ const UserProfile = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.success) {
-        setPaymentMethods(data.data || []);
-      }
+      setPaymentMethods(data.data || []);
     } catch (err) {
       console.error("Failed to fetch payment methods:", err);
     }
   };
 
-  // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -206,11 +193,12 @@ const UserProfile = () => {
     }
   };
 
-  // Update profile
+
+  
+
   const handleUpdate = async () => {
     try {
       setSaving(true);
-
       const res = await fetch(`${API_URL}/api/users/profile`, {
         method: "PUT",
         headers: {
@@ -221,11 +209,49 @@ const UserProfile = () => {
       });
 
       if (!res.ok) throw new Error();
-
       const data = await res.json();
       const updatedUser = data.data?.user || data.user || data;
-      
       setUser(updatedUser);
+      
+      if (formData.address?.street && formData.address?.city && formData.address?.state && formData.address?.pincode) {
+        const addressPayload = {
+          name: formData.name,
+          phone: formData.phone,
+          street: formData.address.street,
+          city: formData.address.city,
+          state: formData.address.state,
+          pincode: formData.address.pincode,
+          country: formData.address.country || "India",
+          addressType: "home",
+          isDefault: addresses.length === 0
+        };
+        
+        if (addresses.length === 0) {
+          await fetch(`${API_URL}/api/addresses`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(addressPayload),
+          });
+          fetchAddresses();
+        } else {
+          const defaultAddress = addresses.find(addr => addr.isDefault);
+          if (defaultAddress) {
+            await fetch(`${API_URL}/api/addresses/${defaultAddress._id}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(addressPayload),
+            });
+            fetchAddresses();
+          }
+        }
+      }
+      
       setIsEditing(false);
       toast.success("🎉 Profile updated successfully!");
     } catch (err) {
@@ -235,10 +261,8 @@ const UserProfile = () => {
     }
   };
 
-  // Address handlers
   const handleAddAddress = async () => {
     try {
-        console.log("Address form data being sent:", addressForm);
       const res = await fetch(`${API_URL}/api/addresses`, {
         method: "POST",
         headers: {
@@ -316,7 +340,6 @@ const UserProfile = () => {
     }
   };
 
-  // Payment method handlers
   const handleAddPaymentMethod = async () => {
     try {
       const res = await fetch(`${API_URL}/api/payment-methods`, {
@@ -373,7 +396,6 @@ const UserProfile = () => {
     }
   };
 
-  // Reset forms
   const resetAddressForm = () => {
     setAddressForm({
       name: "",
@@ -405,7 +427,6 @@ const UserProfile = () => {
     });
   };
 
-  // Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -413,7 +434,6 @@ const UserProfile = () => {
     toast.info("Logged out successfully");
   };
 
-  // Stats data
   const stats = [
     { icon: ShoppingBag, label: "Orders", value: orders.length, color: "bg-blue-500" },
     { icon: Heart, label: "Wishlist", value: wishlist.length, color: "bg-pink-500" },
@@ -421,7 +441,6 @@ const UserProfile = () => {
     { icon: CreditCard, label: "Payments", value: paymentMethods.length, color: "bg-purple-500" },
   ];
 
-  // Mobile menu tabs
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
     { id: "orders", label: "My Orders", icon: ShoppingBag },
@@ -445,12 +464,10 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 pb-20">
-      {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="container mx-auto px-4 py-6 md:py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
             <div className="flex items-center gap-4 w-full md:w-auto">
-              {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="md:hidden p-2 hover:bg-white/20 rounded-lg transition-colors"
@@ -499,7 +516,6 @@ const UserProfile = () => {
       </div>
 
       <div className="container mx-auto px-4 -mt-8 md:-mt-10">
-        {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8 mt-3 md:mt-5">
           {stats.map((stat, index) => (
             <div
@@ -519,12 +535,10 @@ const UserProfile = () => {
           ))}
         </div>
 
-        {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setIsMobileMenuOpen(false)} />
         )}
 
-        {/* Mobile Sidebar */}
         <div className={`fixed left-0 top-0 h-full w-64 bg-white z-50 transform transition-transform duration-300 ease-in-out md:hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="p-4 border-b">
             <div className="flex items-center justify-between">
@@ -561,7 +575,6 @@ const UserProfile = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
-          {/* Desktop Sidebar */}
           <div className="hidden lg:block lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden sticky top-6">
               <nav className="p-4">
@@ -588,9 +601,7 @@ const UserProfile = () => {
             </div>
           </div>
 
-          {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* Profile Tab */}
             {activeTab === "profile" && (
               <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
@@ -651,7 +662,6 @@ const UserProfile = () => {
                 </div>
 
                 <div className="space-y-4 md:space-y-6">
-                  {/* Name */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div>
                       <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
@@ -671,7 +681,6 @@ const UserProfile = () => {
                       )}
                     </div>
 
-                    {/* Email */}
                     <div>
                       <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                         <Mail size={16} />
@@ -692,7 +701,6 @@ const UserProfile = () => {
                     </div>
                   </div>
 
-                  {/* Phone */}
                   <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                       <Phone size={16} />
@@ -711,7 +719,6 @@ const UserProfile = () => {
                     )}
                   </div>
 
-                  {/* Address */}
                   <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                       <MapPin size={16} />
@@ -768,7 +775,6 @@ const UserProfile = () => {
               </div>
             )}
 
-            {/* Orders Tab */}
             {activeTab === "orders" && (
               <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6">
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6">My Orders</h2>
@@ -824,7 +830,6 @@ const UserProfile = () => {
               </div>
             )}
 
-            {/* Wishlist Tab */}
             {activeTab === "wishlist" && (
               <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6">
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6">My Wishlist ({wishlist.length})</h2>
@@ -878,7 +883,6 @@ const UserProfile = () => {
               </div>
             )}
 
-            {/* Addresses Tab */}
             {activeTab === "address" && (
               <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 md:mb-6">
@@ -983,7 +987,6 @@ const UserProfile = () => {
               </div>
             )}
 
-            {/* Payment Methods Tab */}
             {activeTab === "payments" && (
               <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 md:mb-6">
@@ -1079,7 +1082,6 @@ const UserProfile = () => {
               </div>
             )}
 
-            {/* Notifications Tab */}
             {activeTab === "notifications" && (
               <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6">
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6">Notifications</h2>
@@ -1103,7 +1105,6 @@ const UserProfile = () => {
               </div>
             )}
 
-            {/* Settings Tab */}
             {activeTab === "settings" && (
               <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6">
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6">Account Settings</h2>
@@ -1153,13 +1154,12 @@ const UserProfile = () => {
         </div>
       </div>
 
-      {/* Address Modal */}
-      {showAddressModal && (
+            {showAddressModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-4 md:p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg md:text-xl font-bold">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">
                   {editingAddress ? 'Edit Address' : 'Add New Address'}
                 </h3>
                 <button
@@ -1168,128 +1168,143 @@ const UserProfile = () => {
                     setEditingAddress(null);
                     resetAddressForm();
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full"
                 >
-                  <X size={20} className="md:size-24" />
+                  <X size={20} />
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     Full Name *
                   </label>
                   <input
                     type="text"
                     value={addressForm.name}
                     onChange={(e) => setAddressForm({...addressForm, name: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     placeholder="Enter full name"
+                    required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     Phone Number *
                   </label>
                   <input
                     type="tel"
                     value={addressForm.phone}
                     onChange={(e) => setAddressForm({...addressForm, phone: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter phone number"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    placeholder="10-digit mobile number"
+                    maxLength="10"
+                    required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     Street Address *
                   </label>
-                  <input
-                    type="text"
+                  <textarea
                     value={addressForm.street}
                     onChange={(e) => setAddressForm({...addressForm, street: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                    placeholder="House number, street name"
+                    rows="2"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
+                    placeholder="House number, building, street, area"
+                    required
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       City *
                     </label>
                     <input
                       type="text"
                       value={addressForm.city}
                       onChange={(e) => setAddressForm({...addressForm, city: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       placeholder="City"
+                      required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       State *
                     </label>
                     <input
                       type="text"
                       value={addressForm.state}
                       onChange={(e) => setAddressForm({...addressForm, state: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       placeholder="State"
+                      required
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       Pincode *
                     </label>
                     <input
                       type="text"
                       value={addressForm.pincode}
                       onChange={(e) => setAddressForm({...addressForm, pincode: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                      placeholder="Pincode"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      placeholder="6-digit pincode"
+                      maxLength="6"
+                      required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       Country
                     </label>
                     <input
                       type="text"
                       value={addressForm.country}
                       onChange={(e) => setAddressForm({...addressForm, country: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       placeholder="Country"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     Address Type
                   </label>
-                  <select
-                    value={addressForm.addressType}
-                    onChange={(e) => setAddressForm({...addressForm, addressType: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="home">Home</option>
-                    <option value="work">Work</option>
-                    <option value="other">Other</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={addressForm.addressType}
+                      onChange={(e) => setAddressForm({...addressForm, addressType: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm appearance-none bg-white"
+                    >
+                      <option value="home">Home</option>
+                      <option value="work">Work</option>
+                      <option value="other">Other</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     id="isDefault"
                     checked={addressForm.isDefault}
                     onChange={(e) => setAddressForm({...addressForm, isDefault: e.target.checked})}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   />
                   <label htmlFor="isDefault" className="text-sm text-gray-700">
                     Set as default address
@@ -1303,13 +1318,13 @@ const UserProfile = () => {
                       setEditingAddress(null);
                       resetAddressForm();
                     }}
-                    className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 text-sm"
+                    className="flex-1 border border-gray-300 py-3 rounded-xl hover:bg-gray-50 text-sm font-medium transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={editingAddress ? handleUpdateAddress : handleAddAddress}
-                    className="flex-1 bg-black text-white py-2 rounded-lg hover:bg-gray-800 text-sm"
+                    className="flex-1 bg-black text-white py-3 rounded-xl hover:bg-gray-800 text-sm font-medium transition-colors"
                   >
                     {editingAddress ? 'Update' : 'Save'}
                   </button>
@@ -1318,9 +1333,8 @@ const UserProfile = () => {
             </div>
           </div>
         </div>
-      )}
+      )}    
 
-      {/* Payment Method Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-md w-full">
@@ -1349,7 +1363,7 @@ const UserProfile = () => {
                   <select
                     value={paymentForm.type}
                     onChange={(e) => setPaymentForm({...paymentForm, type: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   >
                     <option value="card">Credit/Debit Card</option>
                     <option value="upi">UPI</option>
@@ -1371,7 +1385,7 @@ const UserProfile = () => {
                           ...paymentForm,
                           cardDetails: {...paymentForm.cardDetails, last4: e.target.value}
                         })}
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                       />
                     </div>
 
@@ -1386,7 +1400,7 @@ const UserProfile = () => {
                             ...paymentForm,
                             cardDetails: {...paymentForm.cardDetails, brand: e.target.value}
                           })}
-                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         >
                           <option value="visa">Visa</option>
                           <option value="mastercard">Mastercard</option>
@@ -1405,7 +1419,7 @@ const UserProfile = () => {
                             ...paymentForm,
                             cardDetails: {...paymentForm.cardDetails, cardHolderName: e.target.value}
                           })}
-                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                           placeholder="Name on card"
                         />
                       </div>
@@ -1425,7 +1439,7 @@ const UserProfile = () => {
                             ...paymentForm,
                             cardDetails: {...paymentForm.cardDetails, expiryMonth: e.target.value}
                           })}
-                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         />
                       </div>
                       <div>
@@ -1441,7 +1455,7 @@ const UserProfile = () => {
                             ...paymentForm,
                             cardDetails: {...paymentForm.cardDetails, expiryYear: e.target.value}
                           })}
-                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         />
                       </div>
                     </div>
@@ -1461,7 +1475,7 @@ const UserProfile = () => {
                         ...paymentForm,
                         upiDetails: {upiId: e.target.value}
                       })}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     />
                   </div>
                 )}
@@ -1472,7 +1486,7 @@ const UserProfile = () => {
                     id="isDefaultPayment"
                     checked={paymentForm.isDefault}
                     onChange={(e) => setPaymentForm({...paymentForm, isDefault: e.target.checked})}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   />
                   <label htmlFor="isDefaultPayment" className="text-sm text-gray-700">
                     Set as default payment method
@@ -1486,13 +1500,13 @@ const UserProfile = () => {
                       setEditingPayment(null);
                       resetPaymentForm();
                     }}
-                    className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 text-sm"
+                    className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 text-sm font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleAddPaymentMethod}
-                    className="flex-1 bg-black text-white py-2 rounded-lg hover:bg-gray-800 text-sm"
+                    className="flex-1 bg-black text-white py-3 rounded-lg hover:bg-gray-800 text-sm font-medium"
                   >
                     Save
                   </button>

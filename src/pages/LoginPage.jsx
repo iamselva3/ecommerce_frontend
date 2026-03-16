@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from '@react-oauth/google';
 import AppleSignin from 'react-apple-signin-auth';
@@ -55,13 +55,18 @@ const Login = () => {
           role: data.data.role,
           email: form.email,
         };
+        
 
         console.log("token", data.data.token);
 
         localStorage.setItem("token", data.data.token);
         localStorage.setItem("user", JSON.stringify(user));
 
-        navigate("/");
+        if(user.role === "admin"){
+          navigate("/admin/dashboard");
+        }else{
+          navigate("/");
+        }
       } catch (err) {
         setError(err.message);
       } finally {

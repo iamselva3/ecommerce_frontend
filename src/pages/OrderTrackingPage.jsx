@@ -20,6 +20,7 @@ import {
   MessageSquare,
   XCircle, 
 } from "lucide-react";
+import { generateInvoice } from "../../utils/pdfGenerator";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -32,6 +33,10 @@ const OrderTrackingPage = () => {
   const token = localStorage.getItem("token");
 
   const fullOrderId = orderId ? `${orderId}` : null
+
+  const HandlePdfdownloader = () => {
+   generateInvoice(order) 
+  }
 
   // Fetch order details
   useEffect(() => {
@@ -488,7 +493,7 @@ const getStepStatus = (validStatuses) => {
                 <RefreshCw className={`h-4 w-4 mr-2 ${updating ? "animate-spin" : ""}`} />
                 {updating ? "Updating..." : "Refresh"}
               </button>
-              <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" onClick={HandlePdfdownloader}>
                 <Download className="h-4 w-4 mr-2" />
                 Invoice
               </button>

@@ -11,7 +11,7 @@ const DealsPage = () => {
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   
   useEffect(() => {
@@ -36,13 +36,11 @@ const DealsPage = () => {
   
   useEffect(() => {
     const fetchCart = async () => {
-      if (!token) return;
+      if (!user._id) return;
 
       try {
         const res = await fetch(`${API_URL}/api/cart`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         });
 
         const data = await res.json();
@@ -55,11 +53,11 @@ const DealsPage = () => {
     };
 
     fetchCart();
-  }, [token]);
+  }, [user._id]);
 
   
   const handleAddToCart = async (item) => {
-    if (!token) {
+    if (!user._id) {
       toast.info("Please login to continue");
       navigate("/login");
       return;
@@ -67,12 +65,12 @@ const DealsPage = () => {
 
     try {
       const res = await fetch(`${API_URL}/api/cart`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
           productId: item._id,
           name: item.name,
           price: item.price,
@@ -95,7 +93,7 @@ const DealsPage = () => {
 
   
  const handleBuyNow = async (item) => {
-  if (!token) {
+  if (!user._id) {
     toast.info("Please login to continue");
     navigate("/login");
     return;

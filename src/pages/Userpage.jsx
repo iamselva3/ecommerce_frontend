@@ -68,20 +68,20 @@ const UserProfile = () => {
   });
 
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const authUser = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
-    if (!token) {
+    if (!authUser._id) {
       navigate("/login");
       return;
     }
-  }, [token, navigate]);
+  }, [authUser._id, navigate]);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await fetch(`${API_URL}/api/users/profile`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
         });
 
         if (!res.ok) throw new Error();
@@ -110,14 +110,14 @@ const UserProfile = () => {
       }
     };
 
-    if (token) fetchProfile();
-  }, [token]);
+    if (authUser._id) fetchProfile();
+  }, [authUser._id]);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const res = await fetch(`${API_URL}/api/orders/my-orders`, {
-          headers: { Authorization: `Bearer ${token}` }
+          credentials: "include"
         });
         const data = await res.json();
         setOrders(data.data.orders || []);
@@ -126,14 +126,14 @@ const UserProfile = () => {
       }
     };
 
-    if (token) fetchOrders();
-  }, [token]);
+    if (authUser._id) fetchOrders();
+  }, [authUser._id]);
 
   useEffect(() => {
     const fetchWishlist = async () => {
       try {
         const res = await fetch(`${API_URL}/api/wishlist`, {
-          headers: { Authorization: `Bearer ${token}` }
+          credentials: "include"
         });
         const data = await res.json();
         setWishlist(data.data?.items || []);
@@ -142,20 +142,20 @@ const UserProfile = () => {
       }
     };
 
-    if (token) fetchWishlist();
-  }, [token]);
+    if (authUser._id) fetchWishlist();
+  }, [authUser._id]);
 
   useEffect(() => {
-    if (token) {
+    if (authUser._id) {
       fetchAddresses();
       fetchPaymentMethods();
     }
-  }, [token]);
+  }, [authUser._id]);
 
   const fetchAddresses = async () => {
     try {
       const res = await fetch(`${API_URL}/api/addresses`, {
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       const data = await res.json();
       setAddresses(data.data || []);
@@ -167,7 +167,7 @@ const UserProfile = () => {
   const fetchPaymentMethods = async () => {
     try {
       const res = await fetch(`${API_URL}/api/payment-methods`, {
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       const data = await res.json();
       setPaymentMethods(data.data || []);
@@ -203,8 +203,8 @@ const UserProfile = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify(formData),
       });
 
@@ -231,8 +231,8 @@ const UserProfile = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
             },
+            credentials: "include",
             body: JSON.stringify(addressPayload),
           });
           fetchAddresses();
@@ -243,8 +243,8 @@ const UserProfile = () => {
               method: "PUT",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
               },
+              credentials: "include",
               body: JSON.stringify(addressPayload),
             });
             fetchAddresses();
@@ -266,9 +266,9 @@ const UserProfile = () => {
       const res = await fetch(`${API_URL}/api/addresses`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify(addressForm)
       });
       const data = await res.json();
@@ -288,9 +288,9 @@ const UserProfile = () => {
       const res = await fetch(`${API_URL}/api/addresses/${editingAddress._id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify(addressForm)
       });
       const data = await res.json();
@@ -312,7 +312,7 @@ const UserProfile = () => {
     try {
       const res = await fetch(`${API_URL}/api/addresses/${addressId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       const data = await res.json();
       if (data.success) {
@@ -328,7 +328,7 @@ const UserProfile = () => {
     try {
       const res = await fetch(`${API_URL}/api/addresses/${addressId}/default`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       const data = await res.json();
       if (data.success) {
@@ -345,9 +345,9 @@ const UserProfile = () => {
       const res = await fetch(`${API_URL}/api/payment-methods`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify(paymentForm)
       });
       const data = await res.json();
@@ -368,7 +368,7 @@ const UserProfile = () => {
     try {
       const res = await fetch(`${API_URL}/api/payment-methods/${paymentId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       const data = await res.json();
       if (data.success) {
@@ -384,7 +384,7 @@ const UserProfile = () => {
     try {
       const res = await fetch(`${API_URL}/api/payment-methods/${paymentId}/default`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       const data = await res.json();
       if (data.success) {
@@ -427,8 +427,10 @@ const UserProfile = () => {
     });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_URL}/api/users/logout`, { method: "POST", credentials: "include" });
+    } catch(err) { console.error(err); }
     localStorage.removeItem("user");
     navigate("/", { replace: true });
     toast.info("Logged out successfully");

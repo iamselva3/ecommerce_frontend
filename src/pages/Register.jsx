@@ -51,8 +51,7 @@ const Register = () => {
         }
 
         // Optional auto-login
-        if (data.token) {
-          localStorage.setItem("token", data.token);
+        if (res.ok) {
           localStorage.setItem("user", JSON.stringify(data.user));
           navigate("/");
         } else {

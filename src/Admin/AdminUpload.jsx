@@ -8,7 +8,7 @@ const AVAILABLE_SIZES = ["xs","s", "m", "l", "xl", "xxl","xxxl"];
 const MAX_IMAGES = 10;
 
 const AdminUpload = () => {
-  const token = localStorage.getItem("token");
+
 
   const [loading, setLoading] = useState(false);
 
@@ -131,9 +131,7 @@ const handleSubmit = async (e) => {
       `${API_URL}/api/images/upload-multiple/${category}`, // use normalized category
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
         body: formData,
       }
     );

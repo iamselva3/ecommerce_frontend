@@ -23,7 +23,7 @@ const AdminProducts = () => {
   const [stats, setStats] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   
-  const token = localStorage.getItem("token");
+
   const navigate = useNavigate();
 
   // Fetch products and categories
@@ -195,9 +195,7 @@ const AdminProducts = () => {
       setDeletingId(id);
       const res = await fetch(`${API_URL}/api/images/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (!res.ok) throw new Error();

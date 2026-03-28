@@ -25,7 +25,7 @@ const AdminOrderDetail = () => {
   const [showTrackingForm, setShowTrackingForm] = useState(false);
 
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+
 
   const orderStatusOptions = [
     { value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
@@ -46,18 +46,14 @@ const AdminOrderDetail = () => {
   ];
 
   useEffect(() => {
-    if (!token) {
-      navigate("/admin/login");
-      return;
-    }
     fetchOrderDetails();
-  }, [orderId]);
+  }, [orderId, navigate]);
 
  const fetchOrderDetails = async () => {
   try {
     setLoading(true);
     const res = await fetch(`${API_URL}/api/orders/${orderId}`, {
-      headers: { Authorization: `Bearer ${token}` }
+      credentials: "include",
     });
     const data = await res.json();
     
@@ -91,8 +87,8 @@ const AdminOrderDetail = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
+        credentials: "include",
         body: JSON.stringify({ status: selectedStatus })
       });
 
@@ -119,9 +115,9 @@ const AdminOrderDetail = () => {
       const res = await fetch(`${API_URL}/api/orders/${orderId}/payment-status`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify({ status: selectedPaymentStatus })
       });
 
@@ -146,9 +142,9 @@ const AdminOrderDetail = () => {
       const res = await fetch(`${API_URL}/api/orders/${orderId}/tracking`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify(trackingData)
       });
 

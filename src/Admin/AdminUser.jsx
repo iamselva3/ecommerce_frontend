@@ -33,11 +33,11 @@ const AdminUsers = () => {
     status: "active"
   });
   
-  const token = localStorage.getItem("token");
+
 
   useEffect(() => {
     fetchUsers();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     filterAndSortUsers();
@@ -59,9 +59,7 @@ const AdminUsers = () => {
     try {
       setLoading(true);
       const res = await fetch(`${API_URL}/api/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       const result = await res.json();
@@ -161,9 +159,7 @@ const AdminUsers = () => {
     try {
       setActionLoading(true);
       const res = await fetch(`${API_URL}/api/users/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
       const result = await res.json();
       
@@ -198,8 +194,8 @@ const AdminUsers = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify(updateData),
       });
 
@@ -227,9 +223,7 @@ const AdminUsers = () => {
       setActionLoading(true);
       const res = await fetch(`${API_URL}/api/users/${userId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (res.ok) {
@@ -254,8 +248,8 @@ const AdminUsers = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({ isActive: !currentStatus }),
       });
 

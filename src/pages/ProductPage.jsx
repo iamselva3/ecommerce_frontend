@@ -46,8 +46,8 @@ const formatSizeForDisplay = (size, category) => {
 const ProductPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const isAuthenticated = !!user._id;
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -113,9 +113,9 @@ const ProductPage = () => {
         }
         
         // Check wishlist status (if user is logged in)
-        if (token) {
+        if (isAuthenticated) {
           const wishlistRes = await fetch(`${API_URL}/api/wishlist/check/${productData._id}`, {
-            headers: { Authorization: `Bearer ${token}` }
+            credentials: "include"
           });
           if (wishlistRes.ok) {
             const wishlistData = await wishlistRes.json();
@@ -139,7 +139,7 @@ const ProductPage = () => {
     };
 
     fetchProduct();
-  }, [id, navigate, token]);
+  }, [id, navigate, isAuthenticated]);
 
   // Fetch reviews from backend
   const fetchReviews = async (productId, page = 1, filter = reviewFilter) => {
@@ -195,7 +195,7 @@ const ProductPage = () => {
   };
 
   const handleAddToCart = async () => {
-    if (!token) {
+    if (!isAuthenticated) {
       toast.info("Please login to continue");
       navigate("/login");
       return;
@@ -206,8 +206,8 @@ const ProductPage = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({
           productId: product._id,
           name: product.name,
@@ -227,7 +227,7 @@ const ProductPage = () => {
   };
 
   const handleBuyNow = () => {
-    if (!token) {
+    if (!isAuthenticated) {
       toast.info("Please login to continue");
       navigate("/login");
       return;
@@ -249,7 +249,7 @@ const ProductPage = () => {
 
   // Toggle wishlist
   const handleWishlistToggle = async () => {
-    if (!token) {
+    if (!isAuthenticated) {
       toast.info("Please login to save to wishlist");
       navigate("/login");
       return;
@@ -259,9 +259,7 @@ const ProductPage = () => {
       const method = isWishlisted ? "DELETE" : "POST";
       const res = await fetch(`${API_URL}/api/wishlist/${product._id}`, {
         method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (res.ok) {
@@ -289,7 +287,7 @@ const ProductPage = () => {
 
   // Review Handlers
   const handleOpenReviewModal = (review = null) => {
-    if (!token) {
+    if (!isAuthenticated) {
       toast.info("Please login to write a review");
       navigate("/login");
       return;
@@ -322,7 +320,7 @@ const ProductPage = () => {
     toast.error("Please enter your review");
     return;
   }
-console.log("Token from localStorage:", token);
+console.log("Auth uses HttpOnly cookies");
 
   try {
     let url = `${API_URL}/api/reviews/product/${product._id}`;
@@ -340,8 +338,8 @@ console.log("Token from localStorage:", token);
       method,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
+      credentials: "include",
       body: JSON.stringify({
         rating: reviewForm.rating,
         title: reviewForm.title,
@@ -371,9 +369,7 @@ console.log("Token from localStorage:", token);
     try {
       const res = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (res.ok) {
@@ -420,7 +416,7 @@ console.log("Token from localStorage:", token);
 
   // Check if user has already reviewed
   const userReview = reviews.find(r => r.user?._id === user._id || r.user === user._id);
-  const canReview = token && !userReview;
+  const canReview = isAuthenticated && !userReview;
 
   if (loading) {
     return (
@@ -850,7 +846,7 @@ console.log("Token from localStorage:", token);
                   ? "bg-black text-white hover:bg-gray-800"
                   : "bg-gray-200 text-gray-500 cursor-not-allowed"
               }`}
-              title={!token ? "Login to write a review" : userReview ? "You have already reviewed this product" : ""}
+              title={!isAuthenticated ? "Login to write a review" : userReview ? "You have already reviewed this product" : ""}
             >
               Write a Review
             </button>

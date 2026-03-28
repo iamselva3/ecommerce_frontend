@@ -8,7 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 const PaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
   
   const { orderData } = location.state || {};
   const [loading, setLoading] = useState(false);
@@ -176,9 +176,9 @@ const upiApps = [
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(orderDataToSend),
+        credentials: "include",
+        body: JSON.stringify(formattedOrderData),
       });
 
       const responseData = await res.json();
@@ -191,9 +191,7 @@ const upiApps = [
       if (!orderData.isDirectBuy) {
         await fetch(`${API_URL}/api/cart/clear`, {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         });
       }
 

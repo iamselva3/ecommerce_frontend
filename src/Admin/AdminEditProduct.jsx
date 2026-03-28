@@ -13,7 +13,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 const AdminEditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+
 
   const [form, setForm] = useState({
     name: "",
@@ -188,9 +188,7 @@ const AdminEditProduct = () => {
       setUploading(true);
       const res = await fetch(`${API_URL}/api/images/upload`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
         body: uploadData,
       });
 
@@ -216,9 +214,7 @@ const AdminEditProduct = () => {
         deletedImages.map(imageId =>
           fetch(`${API_URL}/api/images/${imageId}`, {
             method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: "include",
           })
         )
       );
@@ -258,8 +254,8 @@ const AdminEditProduct = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify(updateData),
       });
 

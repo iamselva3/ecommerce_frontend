@@ -14,7 +14,6 @@ const API_URL = import.meta.env.VITE_API_URL;
 const BlogPostPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const [post, setPost] = useState(null);
@@ -48,7 +47,7 @@ const BlogPostPage = () => {
         setLikeCount(data.data.likes || 0);
         
         // Check if user liked this post
-        if (token && data.data.likedBy?.includes(user._id)) {
+        if (user._id && data.data.likedBy?.includes(user._id)) {
           setLiked(true);
         }
         
@@ -116,7 +115,7 @@ const BlogPostPage = () => {
   };
 
   const handleLike = async () => {
-    if (!token) {
+    if (!user._id) {
       toast.info("Please login to like posts");
       navigate("/login");
       return;
@@ -125,9 +124,7 @@ const BlogPostPage = () => {
     try {
       const res = await fetch(`${API_URL}/api/blog/posts/${post._id}/like`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (res.ok) {
@@ -140,7 +137,7 @@ const BlogPostPage = () => {
   };
 
   const handleBookmark = async () => {
-    if (!token) {
+    if (!user._id) {
       toast.info("Please login to bookmark posts");
       navigate("/login");
       return;
@@ -150,9 +147,7 @@ const BlogPostPage = () => {
       const method = bookmarked ? "DELETE" : "POST";
       const res = await fetch(`${API_URL}/api/blog/bookmarks/${post._id}`, {
         method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (res.ok) {
@@ -180,7 +175,7 @@ const BlogPostPage = () => {
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     
-    if (!token) {
+    if (!user._id) {
       toast.info("Please login to comment");
       navigate("/login");
       return;
@@ -196,8 +191,8 @@ const BlogPostPage = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({
           content: commentText,
           parentId: replyTo?._id
@@ -223,9 +218,7 @@ const BlogPostPage = () => {
     try {
       const res = await fetch(`${API_URL}/api/blog/comments/${commentId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (res.ok) {
@@ -510,14 +503,14 @@ const BlogPostPage = () => {
                     <textarea
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
-                      placeholder={token ? "Write a comment..." : "Login to comment"}
+                      placeholder={user._id ? "Write a comment..." : "Login to comment"}
                       rows="3"
-                      disabled={!token}
+                      disabled={!user._id}
                       className="flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                     />
                     <button
                       type="submit"
-                      disabled={!token || !commentText.trim()}
+                      disabled={!user._id || !commentText.trim()}
                       className="px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Send size={20} />

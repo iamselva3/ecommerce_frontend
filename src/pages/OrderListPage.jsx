@@ -8,20 +8,20 @@ const OrdersListPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
-    if (!token) {
+    if (!user._id) {
       navigate("/login");
       return;
     }
     fetchOrders();
-  }, [token, navigate]);
+  }, [user._id, navigate]);
 
   const fetchOrders = async () => {
     try {
       const res = await fetch(`${API_URL}/api/orders/my-orders`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       const data = await res.json();
       setOrders(data.data?.orders || []);

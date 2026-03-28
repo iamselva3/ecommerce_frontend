@@ -52,7 +52,6 @@ const CheckoutPage = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const [isPincodeValidated, setIsPincodeValidated] = useState(false);
@@ -74,7 +73,7 @@ const CheckoutPage = () => {
   const directProduct = location.state?.directProduct;
 
   useEffect(() => {
-    if (!token) {
+    if (!user._id && !user.name) {
       navigate("/login");
       return;
     }
@@ -102,9 +101,7 @@ const CheckoutPage = () => {
       const fetchCart = async () => {
         try {
           const res = await fetch(`${API_URL}/api/cart`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: "include",
           });
 
           if (!res.ok) throw new Error("Failed to fetch cart");
@@ -133,15 +130,13 @@ const CheckoutPage = () => {
 
       fetchCart();
     }
-  }, [token, navigate, directProduct]);
+  }, [user._id, navigate, directProduct]);
 
   const fetchSavedAddresses = async () => {
     try {
       setLoadingAddresses(true);
       const res = await fetch(`${API_URL}/api/addresses`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (res.ok) {
@@ -255,8 +250,8 @@ const CheckoutPage = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
+          credentials: "include",
           body: JSON.stringify({
             productId,
             qty: newQty,
@@ -282,9 +277,7 @@ const CheckoutPage = () => {
     try {
       const res = await fetch(`${API_URL}/api/cart/${productId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (res.ok) {
@@ -368,8 +361,8 @@ const CheckoutPage = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify(orderData),
       });
 
@@ -382,9 +375,7 @@ const CheckoutPage = () => {
       if (!cart?.isDirectBuy) {
         await fetch(`${API_URL}/api/cart/clear`, {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         });
       }
 

@@ -37,15 +37,15 @@ const WishlistPage = () => {
   ]);
 
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
-    if (!token) {
+    if (!user._id) {
       navigate("/login");
       return;
     }
     fetchWishlist();
-  }, [token, navigate]);
+  }, [user._id, navigate]);
 
   useEffect(() => {
     filterWishlistItems();
@@ -55,7 +55,7 @@ const WishlistPage = () => {
     try {
       setLoading(true);
       const res = await fetch(`${API_URL}/api/wishlist`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
 
       const data = await res.json();
@@ -92,11 +92,11 @@ const WishlistPage = () => {
   // Add this after your existing useEffects
 useEffect(() => {
   const fetchCartStatus = async () => {
-    if (!token) return;
+    if (!user._id) return;
     
     try {
       const res = await fetch(`${API_URL}/api/cart`, {
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       
       if (res.ok) {
@@ -113,7 +113,7 @@ useEffect(() => {
   };
   
   fetchCartStatus();
-}, [token]);
+}, [user._id]);
 
   const updateCategoryCounts = (items) => {
     const itemsArray = Array.isArray(items) ? items : [];
@@ -163,7 +163,7 @@ useEffect(() => {
     try {
       const res = await fetch(`${API_URL}/api/wishlist/${productId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
 
       const data = await res.json();
@@ -185,7 +185,7 @@ useEffect(() => {
 const addToCart = async (item) => {
   console.log("sdgvdsgv", item);
   
-  if (!token) {
+  if (!user._id) {
     toast.info("Please login to continue");
     navigate("/login");
     return;
@@ -208,8 +208,8 @@ const addToCart = async (item) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
+      credentials: "include",
       body: JSON.stringify({
         productId: item._id,
         name: item.name,
@@ -264,8 +264,8 @@ const moveAllToCart = async () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
+          credentials: "include",
           body: JSON.stringify({
             productId: item._id,
             name: item.name,
@@ -321,7 +321,7 @@ const removeMultipleFromWishlist = async (productIds) => {
       productIds.map(productId =>
         fetch(`${API_URL}/api/wishlist/${productId}`, {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
         })
       )
     );
@@ -339,7 +339,7 @@ const removeMultipleFromWishlist = async (productIds) => {
     try {
       const res = await fetch(`${API_URL}/api/wishlist/clear`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
 
       const data = await res.json();

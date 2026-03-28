@@ -52,15 +52,11 @@ const AdminPincodes = () => {
   const [uploading, setUploading] = useState(false);
 
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+
 
   useEffect(() => {
-    if (!token) {
-      navigate("/admin/login");
-      return;
-    }
     fetchPincodes();
-  }, [token, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     filterPincodes();
@@ -70,7 +66,7 @@ const AdminPincodes = () => {
     try {
       setLoading(true);
       const res = await fetch(`${API_URL}/api/pincode/admin/all?page=1&limit=100000`, {
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       const data = await res.json();
 
@@ -153,9 +149,9 @@ const AdminPincodes = () => {
       const res = await fetch(`${API_URL}/api/pincode/admin/add`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify(formData)
       });
 
@@ -186,9 +182,9 @@ const AdminPincodes = () => {
     const res = await fetch(`${API_URL}/api/pincode/admin/${selectedPincode.pincode}`, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
+        "Content-Type": "application/json"
       },
+      credentials: "include",
       body: JSON.stringify(formData)
     });
 
@@ -244,9 +240,9 @@ const AdminPincodes = () => {
       const res = await fetch(`${API_URL}/api/pincode/admin/bulk-upload`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify({ pincodes: pincodesArray })
       });
 
@@ -274,9 +270,9 @@ const AdminPincodes = () => {
     const res = await fetch(`${API_URL}/api/pincode/admin/${pincode}`, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
+        "Content-Type": "application/json"
       },
+      credentials: "include",
       body: JSON.stringify({ isDeliverable: !currentStatus })
     });
 

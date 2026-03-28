@@ -40,11 +40,11 @@ const Login = () => {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify(form),
         });
 
         const data = await res.json();
-        console.log(data.token);
 
         if (!res.ok) {
           throw new Error(data.message || "Login failed");
@@ -57,9 +57,6 @@ const Login = () => {
         };
         
 
-        console.log("token", data.data.token);
-
-        localStorage.setItem("token", data.data.token);
         localStorage.setItem("user", JSON.stringify(user));
 
         if(user.role === "admin"){
@@ -88,6 +85,7 @@ const Login = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           token: credentialResponse.credential,
         }),
@@ -105,7 +103,6 @@ const Login = () => {
         role: data.data.role || 'user',
       };
 
-      localStorage.setItem("token", data.data.token);
       localStorage.setItem("user", JSON.stringify(user));
 
       navigate("/");
@@ -126,6 +123,7 @@ const Login = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           code: response.authorization.code,
           id_token: response.authorization.id_token,
@@ -145,7 +143,6 @@ const Login = () => {
         role: data.data.role || 'user',
       };
 
-      localStorage.setItem("token", data.data.token);
       localStorage.setItem("user", JSON.stringify(user));
 
       navigate("/");

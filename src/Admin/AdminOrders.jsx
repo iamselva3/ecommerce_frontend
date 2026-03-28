@@ -56,7 +56,7 @@ const AdminOrders = () => {
   });
 
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+
 
   // Status options
   const orderStatusOptions = [
@@ -79,13 +79,9 @@ const AdminOrders = () => {
   ];
 
   useEffect(() => {
-    if (!token) {
-      navigate("/admin/login");
-      return;
-    }
     fetchOrders();
     fetchStats();
-  }, [token, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     filterOrders();
@@ -99,10 +95,9 @@ const AdminOrders = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/orders`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
+      const res = await fetch(`${API_URL}/api/orders/admin`, {
+        credentials: "include",
+      });const data = await res.json();
       
       if (data.success) {
         const ordersArray = data.data?.orders || [];
@@ -121,7 +116,7 @@ const AdminOrders = () => {
   const fetchStats = async () => {
     try {
       const res = await fetch(`${API_URL}/api/orders/stats/orders`, {
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       const data = await res.json();
       
@@ -197,7 +192,7 @@ const AdminOrders = () => {
   const handleViewOrder = async (orderId) => {
     try {
       const res = await fetch(`${API_URL}/api/orders/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       const data = await res.json();
       
@@ -221,8 +216,8 @@ const AdminOrders = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
+        credentials: "include",
         body: JSON.stringify({ 
           status: newStatus,
           message: message || `Order ${newStatus.replace(/_/g, ' ')}`
@@ -262,9 +257,9 @@ const AdminOrders = () => {
       const res = await fetch(`${API_URL}/api/orders/${orderId}/payment-status`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify({ status: newStatus })
       });
 
@@ -298,9 +293,9 @@ const AdminOrders = () => {
       const res = await fetch(`${API_URL}/api/orders/${orderId}/tracking`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify(trackingData)
       });
 

@@ -18,17 +18,16 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
-    if (!token) {
+    if (!user || user.role !== "admin") {
       navigate("/admin/login");
       return;
     }
 
     fetchDashboardData();
-  }, [token, navigate]);
+  }, [navigate]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -48,9 +47,7 @@ const AdminDashboard = () => {
   const fetchStats = async () => {
     try {
       const res = await fetch(`${API_URL}/api/images/stats/images`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (!res.ok) throw new Error();
@@ -64,7 +61,9 @@ const AdminDashboard = () => {
 
   const fetchLatestImages = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/images/latest/images`);
+      const res = await fetch(`${API_URL}/api/images/latest/images`, {
+        credentials: "include",
+      });
       const data = await res.json();
       
       // Handle different response structures
@@ -78,9 +77,7 @@ const AdminDashboard = () => {
   const fetchUserStats = async () => {
     try {
       const res = await fetch(`${API_URL}/api/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (!res.ok) throw new Error();
@@ -118,8 +115,10 @@ const AdminDashboard = () => {
     toast.success("Dashboard refreshed");
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_URL}/api/users/logout`, { method: "POST", credentials: "include" });
+    } catch(err) { console.error(err); }
     localStorage.removeItem("user");
     toast.success("Logged out successfully");
     navigate("/admin/login");

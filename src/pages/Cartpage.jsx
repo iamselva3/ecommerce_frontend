@@ -15,24 +15,24 @@ const CartPage = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   console.log("wdyyw",cart)
 
   // Auth check
   useEffect(() => {
-    if (!token) {
+    if (!user?.name) {
       toast.info("Please login to view your cart");
       navigate("/login");
     }
-  }, [token, navigate]);
+  }, [navigate]);
 
   // Fetch cart
 useEffect(() => {
   const fetchCart = async () => {
     try {
       const res = await fetch(`${API_URL}/api/cart`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
 
       // Handle 404 - cart not found (after clearing)
@@ -63,8 +63,8 @@ useEffect(() => {
     }
   };
 
-  if (token) fetchCart();
-}, [token]);
+  if (user?.name) fetchCart();
+}, []);
 
   // Update quantity
   const updateQty = async (productId, qty) => {
@@ -74,10 +74,8 @@ useEffect(() => {
     try {
       const res = await fetch(`${API_URL}/api/cart`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ productId, qty }),
       });
 
@@ -101,7 +99,7 @@ useEffect(() => {
     try {
       const res = await fetch(`${API_URL}/api/cart/${productId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
 
       if (!res.ok) throw new Error();
@@ -121,7 +119,7 @@ useEffect(() => {
     try {
       const res = await fetch(`${API_URL}/api/wishlist/${item.productId}`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
 
       if (res.ok) {
@@ -158,9 +156,7 @@ const handleClearCart = async () => {
   try {
     const response = await fetch(`${API_URL}/api/cart`, {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      credentials: "include",
     });
 
     if (response.ok) {

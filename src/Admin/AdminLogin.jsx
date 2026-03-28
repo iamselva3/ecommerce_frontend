@@ -17,6 +17,7 @@ const AdminLogin = () => {
     const res = await fetch(`${API_URL}/api/users/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ email, password }),
     });
 
@@ -27,13 +28,12 @@ const AdminLogin = () => {
     }
 
     
-    const { user, token } = result.data;
+    const { user } = result.data;
 
     if (user.role !== "admin") {
       throw new Error("Admin access only");
     }
 
-    localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
 
     navigate("/admin/dashboard");

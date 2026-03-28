@@ -24,7 +24,7 @@ const SearchResultsPage = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [categories, setCategories] = useState([]);
   
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   // Fetch search results
   useEffect(() => {
@@ -54,7 +54,7 @@ const SearchResultsPage = () => {
         setCategories(uniqueCategories);
         
         // After products are loaded, check wishlist status for each
-        if (token && productsData.length > 0) {
+        if (user._id && productsData.length > 0) {
           checkWishlistStatusForProducts(productsData);
         }
         
@@ -79,14 +79,12 @@ const SearchResultsPage = () => {
       await Promise.all(
         productsList.map(async (product) => {
           try {
-            const response = await fetch(`${API_URL}/api/wishlist/check/${product._id}`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+            const res = await fetch(`${API_URL}/api/wishlist/check/${product._id}`, {
+              credentials: "include",
             });
             
-            if (response.ok) {
-              const data = await response.json();
+            if (res.ok) {
+              const data = await res.json();
               statusMap[product._id] = data.isWishlisted || false;
             }
           } catch (error) {
@@ -144,8 +142,7 @@ const SearchResultsPage = () => {
   };
 
   const handleWishlistToggle = async (productId) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
+    if (!user._id) {
       toast.error('Please login to manage wishlist');
       navigate('/login');
       return;
@@ -159,12 +156,13 @@ const SearchResultsPage = () => {
       const method = isWishlisted ? 'DELETE' : 'POST';
       
       const response = await fetch(`${API_URL}/api/wishlist/${productId}`, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: "include",
+          body: JSON.stringify({ productId }),
+        });
 
       if (response.ok) {
         // Update the wishlist status for this product

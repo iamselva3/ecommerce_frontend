@@ -12,22 +12,20 @@ const ProductCard = ({ product }) => {
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   // Check if product is in wishlist on component mount
   useEffect(() => {
     const checkWishlistStatus = async () => {
-      if (!token || !product?._id) return;
+      if (!user._id || !product?._id) return;
       
       try {
-        const response = await fetch(`${API_URL}/api/wishlist/check/${product._id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+          const res = await fetch(`${API_URL}/api/wishlist/check/${product._id}`, {
+            credentials: "include"
+          });
         
-        if (response.ok) {
-          const data = await response.json();
+        if (res.ok) {
+          const data = await res.json();
           setIsWishlisted(data.isWishlisted || false);
         }
       } catch (error) {
@@ -36,13 +34,11 @@ const ProductCard = ({ product }) => {
     };
 
     checkWishlistStatus();
-  }, [product._id, token]);
+  }, [product._id, user._id]);
 
   const handleWishlistToggle = async (productId) => {
     console.log("Toggling wishlist for:", productId);
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
+    if (!user._id) {
       toast.error('Please login to manage wishlist');
       navigate('/login');
       return;
@@ -56,8 +52,8 @@ const ProductCard = ({ product }) => {
         method: method,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -79,7 +75,7 @@ const ProductCard = ({ product }) => {
   e.preventDefault();
   e.stopPropagation();
 
-  if (!token) {
+  if (!user._id) {
     toast.info("Please login to continue");
     navigate("/login");
     return;
@@ -89,12 +85,12 @@ const ProductCard = ({ product }) => {
     // Convert all sizes to lowercase before sending
     const normalizedSizes = product.sizes?.map(size => size.toLowerCase()) || [];
 
-    const res = await fetch(`${API_URL}/api/cart`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      const res = await fetch(`${API_URL}/api/cart`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
       body: JSON.stringify({
         productId: product._id || product.id,
         name: product.name,

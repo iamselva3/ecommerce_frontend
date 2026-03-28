@@ -30,7 +30,7 @@ const OrderTrackingPage = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const fullOrderId = orderId ? `${orderId}` : null
 
@@ -40,7 +40,7 @@ const OrderTrackingPage = () => {
 
   // Fetch order details
   useEffect(() => {
-    if (!token) {
+    if (!user._id) {
       navigate("/login");
       return;
     }
@@ -52,23 +52,23 @@ const OrderTrackingPage = () => {
     }
 
     fetchOrderDetails();
-  }, [fullOrderId, token, navigate]);
+  }, [fullOrderId, navigate]);
 
 const fetchOrderDetails = async () => {
   try {
     console.log(`Fetching order: ${fullOrderId}`);
-    
-    const res = await fetch(`${API_URL}/api/orders/${encodeURIComponent(fullOrderId)}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-    });
+        const response = await fetch(`${API_URL}/api/orders/${orderId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: "include",
+        });
 
-    const data = await res.json();
+    const data = await response.json();
     console.log("Order API response:", data);
 
-    if (!res.ok) {
+    if (!response.ok) {
       throw new Error(data.message || "Failed to fetch order");
     }
 

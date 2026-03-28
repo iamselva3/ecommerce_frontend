@@ -16,7 +16,7 @@ const ShopPage = () => {
 
   const scrollRefs = useRef({});
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -65,11 +65,11 @@ const ShopPage = () => {
 
   useEffect(() => {
     const fetchCart = async () => {
-      if (!token) return;
+      if (!user._id) return;
 
       try {
         const res = await fetch(`${API_URL}/api/cart`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
         });
 
         if (!res.ok) return;
@@ -83,14 +83,14 @@ const ShopPage = () => {
     };
 
     fetchCart();
-  }, [token]);
+  }, [user._id]);
 
   useEffect(() => {
     const fetchWishlist = async () => {
-      if (!token) return;
+      if (!user._id) return;
       try {
         const res = await fetch(`${API_URL}/api/wishlist`, {
-          headers: { Authorization: `Bearer ${token}` }
+          credentials: "include",
         });
         const data = await res.json();
         const items = data.data?.items || [];
@@ -100,7 +100,7 @@ const ShopPage = () => {
       }
     };
     fetchWishlist();
-  }, [token]);
+  }, [user._id]);
 
   const scroll = (slug, dir) => {
     const el = scrollRefs.current[slug];
@@ -113,7 +113,7 @@ const ShopPage = () => {
   };
 
   const handleAddToCart = async (item) => {
-    if (!token) {
+    if (!user._id) {
       toast.info("Please login to continue");
       navigate("/login");
       return;
@@ -121,11 +121,11 @@ const ShopPage = () => {
 
     try {
       const res = await fetch(`${API_URL}/api/cart`, {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({
           productId: item._id,
           name: item.name,
@@ -146,7 +146,7 @@ const ShopPage = () => {
   };
 
   const handleBuyNow = async (item) => {
-    if (!token) {
+    if (!user._id) {
       toast.info("Please login to continue");
       navigate("/login");
       return;
@@ -167,7 +167,7 @@ const ShopPage = () => {
   };
 
   const handleAddToWishlist = async (item) => {
-    if (!token) {
+    if (!user._id) {
       toast.info("Please login to continue");
       navigate("/login");
       return;
@@ -178,8 +178,8 @@ const ShopPage = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({ productId: item._id }),
       });
 

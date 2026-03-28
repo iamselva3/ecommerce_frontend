@@ -18,7 +18,7 @@ const AdminFeatured = () => {
   const [itemsPerPage] = useState(8);
   const [togglingId, setTogglingId] = useState(null);
   
-  const token = localStorage.getItem("token");
+
 
   useEffect(() => {
     fetchFeaturedItems();
@@ -82,12 +82,9 @@ const AdminFeatured = () => {
   const toggleFeatured = async (id) => {
     try {
       setTogglingId(id);
-      const res = await fetch(`${API_URL}/api/images/${id}/toggle-featured`, {
-        method: "PUT",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
+      const res = await fetch(`${API_URL}/api/products/${id}/featured`, {
+        method: "PATCH",
+        credentials: "include",
       });
 
       if (!res.ok) throw new Error("Failed to toggle featured status");

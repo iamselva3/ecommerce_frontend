@@ -10,7 +10,7 @@ const CategoryPage = () => {
   const { category } = useParams();
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("token");
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cartProductIds, setCartProductIds] = useState({});
@@ -49,11 +49,11 @@ const CategoryPage = () => {
 
   // Fetch cart items
   const fetchCartItems = async () => {
-    if (!token) return;
+    if (!localStorage.getItem("user")) return;
 
     try {
       const res = await fetch(`${API_URL}/api/cart`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
 
       if (!res.ok) return;
@@ -98,7 +98,7 @@ const CategoryPage = () => {
     };
 
     fetchCategoryItems();
-  }, [category, token]);
+  }, [category]);
 
   const scroll = (dir) => {
     if (!scrollRef.current) return;
@@ -110,8 +110,7 @@ const CategoryPage = () => {
   };
 
   const handleAddToCart = async (item) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!localStorage.getItem("user")) {
       navigate("/login");
       return;
     }
@@ -122,10 +121,8 @@ const CategoryPage = () => {
     try {
       const res = await fetch(`${API_URL}/api/cart`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           productId: item._id,
           name: item.name,
@@ -151,7 +148,7 @@ const CategoryPage = () => {
   };
 
   const handleBuyNow = async (item) => {
-    if (!token) {
+    if (!localStorage.getItem("user")) {
       toast.info("Please login to continue");
       navigate("/login");
       return;

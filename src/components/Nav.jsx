@@ -25,7 +25,7 @@ const Navbar = () => {
 
   const searchRef = useRef(null);
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -48,11 +48,11 @@ const Navbar = () => {
 
   // Fetch cart count
   useEffect(() => {
-    if (token) {
+    if (user._id) {
       fetchCartCount();
       fetchWishlistCount();
     }
-  }, [token]);
+  }, [user._id]);
 
   // Fetch categories
   useEffect(() => {
@@ -88,7 +88,7 @@ const Navbar = () => {
   const fetchCartCount = async () => {
     try {
       const res = await fetch(`${API_URL}/api/cart/count`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -103,7 +103,7 @@ const Navbar = () => {
   const fetchWishlistCount = async () => {
     try {
       const res = await fetch(`${API_URL}/api/wishlist/count`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();

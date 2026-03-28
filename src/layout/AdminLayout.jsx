@@ -17,7 +17,6 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const token = localStorage.getItem("token");
 
   // Close mobile menu on window resize
   useEffect(() => {
@@ -30,8 +29,12 @@ const AdminLayout = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = async () => {
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/logout`, { method: "POST", credentials: "include" });
+    } catch (err) {
+      console.error(err);
+    }
     localStorage.removeItem("user");
     toast.success("Logged out successfully");
     navigate("/admin/login");

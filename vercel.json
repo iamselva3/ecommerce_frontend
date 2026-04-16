@@ -1,8 +1,12 @@
 {
     "rewrites": [
         {
+            "source": "/api/(.*)",
+            "destination": "https://ecommerce-backend-mrby.onrender.com/api/$1"
+        },
+        {
             "source": "/(.*)",
-            "destination": "/"
+            "destination": "/index.html"
         }
     ]
 }

@@ -56,7 +56,6 @@ const Login = () => {
           email: form.email,
         };
         
-
         localStorage.setItem("user", JSON.stringify(user));
 
         if(user.role === "admin"){
@@ -102,7 +101,6 @@ const Login = () => {
         email: data.data.email,
         role: data.data.role || 'user',
       };
-
       localStorage.setItem("user", JSON.stringify(user));
 
       navigate("/");
@@ -142,7 +140,6 @@ const Login = () => {
         email: data.data.email,
         role: data.data.role || 'user',
       };
-
       localStorage.setItem("user", JSON.stringify(user));
 
       navigate("/");

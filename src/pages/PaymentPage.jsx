@@ -22,19 +22,7 @@ const PaymentPage = () => {
     cvv: "",
   });
   
-  // State for UPI payment
-  const [upiId, setUpiId] = useState("");
-  const [selectedUpiApp, setSelectedUpiApp] = useState("");
-  
-const upiApps = [
-  { id: "gpay", name: "Google Pay", icon: "/upi/gpay.svg" },
-  { id: "phonepe", name: "PhonePe", icon: "/upi/phonepe.svg" },
-  { id: "paytm", name: "Paytm", icon: "/upi/paytm.svg" },
-  { id: "bhim", name: "BHIM UPI", icon: "/upi/bhim.svg" },
-  // { id: "other", name: "Other UPI Apps", icon: "/upi/upi.svg" },
-];
-
-
+  // Razorpay will handle UPI inputs and apps.
   if (!orderData) {
     navigate("/checkout");
     return null;
@@ -99,55 +87,82 @@ const upiApps = [
     return true;
   };
 
-  const validateUpiDetails = () => {
-    if (!upiId || !upiId.includes("@")) {
-      toast.error("Please enter a valid UPI ID (e.g., username@upi)");
-      return false;
+  // No frontend validation needed for UPI anymore, Razorpay handles it.
+
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleRazorpayPayment = async (method) => {
+    setLoading(true);
+    try {
+      const res = await loadRazorpay();
+      if (!res) {
+        toast.error("Payment SDK failed to load.");
+        setLoading(false);
+        return;
+      }
+      
+      const keyRes = await fetch(`${API_URL}/api/payment/get-razorpay-key`, {credentials: "include"});
+      const { key } = await keyRes.json();
+      
+      const orderRes = await fetch(`${API_URL}/api/payment/razorpay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ amount: orderData.total }),
+      });
+      const order = await orderRes.json();
+      
+      const options = {
+        key: key,
+        amount: order.amount,
+        currency: order.currency,
+        name: "E-commerce",
+        description: "Order Payment",
+        order_id: order.id,
+        handler: async function (response) {
+          await processOrder(method, "completed");
+        },
+        prefill: {
+          name: orderData.address?.fullName || user?.name || "",
+          email: user?.email || "",
+          contact: orderData.address?.phone || "",
+        },
+        theme: {
+          color: "#3399cc",
+        },
+      };
+      
+      const paymentObject = new window.Razorpay(options);
+      
+      paymentObject.on('payment.failed', function (response) {
+          processOrder(method, "failed");
+      });
+      
+      paymentObject.open();
+    } catch (error) {
+      toast.error("Server error. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    if (!selectedUpiApp) {
-      toast.error("Please select a UPI app");
-      return false;
-    }
-    return true;
   };
 
   const processCardPayment = async () => {
-    if (!validateCardDetails()) return;
-    
-    setLoading(true);
-    
-    try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Process order with card payment
-      await processOrder("card");
-    } catch (error) {
-      toast.error("Payment failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    handleRazorpayPayment("card");
   };
 
   const processUpiPayment = async () => {
-    if (!validateUpiDetails()) return;
-    
-    setLoading(true);
-    
-    try {
-      // Simulate UPI payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Process order with UPI payment
-      await processOrder("upi");
-    } catch (error) {
-      toast.error("UPI payment failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    handleRazorpayPayment("upi");
   };
 
-  const processOrder = async (paymentMethod) => {
+  const processOrder = async (paymentMethod, paymentStatus = "completed") => {
     try {
       const orderDataToSend = {
         items: orderData.items.map((item) => ({
@@ -167,6 +182,7 @@ const upiApps = [
         
         shippingAddress: orderData.address,
         paymentMethod: paymentMethod,
+        paymentStatus: paymentStatus,
         isDirectBuy: orderData.isDirectBuy || false,
         notes: '',
         discount: 0,
@@ -178,7 +194,7 @@ const upiApps = [
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify(formattedOrderData),
+        body: JSON.stringify(orderDataToSend),
       });
 
       const responseData = await res.json();
@@ -195,7 +211,11 @@ const upiApps = [
         });
       }
 
-      toast.success("🎉 Payment successful! Order placed.");
+      if (paymentStatus === "failed") {
+        toast.error("Payment failed. Order saved with failed status.");
+      } else {
+        toast.success("🎉 Payment successful! Order placed.");
+      }
       
       navigate("/order-confirmation", {
         state: {
@@ -316,54 +336,20 @@ const upiApps = [
 
   const renderUpiPaymentForm = () => (
     <div className="bg-white rounded-xl shadow-sm p-6">
-      <div className="flex items-center mb-6">
+      <div className="flex items-center mb-4">
         <Smartphone className="h-6 w-6 text-green-600 mr-2" />
-        <h2 className="text-xl font-bold text-gray-900">UPI Payment</h2>
+        <h2 className="text-xl font-bold text-gray-900">Pay using UPI / QR</h2>
       </div>
       
       <div className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Select UPI App
-          </label>
-         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-  {upiApps.map((app) => (
-    <button
-      key={app.id}
-      onClick={() => setSelectedUpiApp(app.id)}
-      className={`p-4 border rounded-lg flex flex-col items-center justify-center transition-all
-        ${selectedUpiApp === app.id 
-          ? "border-green-500 bg-green-50" 
-          : "border-gray-300 hover:border-gray-400"
-        }
-      `}
-    >
-      <img
-        src={app.icon}
-        alt={app.name}
-        className="w-10 h-10 object-contain mb-2"
-      />
-      <span className="text-sm font-medium">{app.name}</span>
-    </button>
-  ))}
-</div>
-
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            UPI ID
-          </label>
-          <input
-            type="text"
-            value={upiId}
-            onChange={(e) => setUpiId(e.target.value)}
-            placeholder="username@upi"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-          <p className="text-sm text-gray-500 mt-1">
-            Enter your UPI ID (e.g., mobileNumber@upi, username@okicici)
-          </p>
+        <div className="p-4 bg-green-50 rounded-lg border border-green-100 flex items-start">
+          <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5" />
+          <div>
+            <p className="font-medium text-green-900">Razorpay Secure Checkout</p>
+            <p className="text-sm text-green-700 mt-1">
+              You will be securely redirected to Razorpay Checkout. You can enter your UPI ID, scan a QR code, or log into your favorite UPI app directly there.
+            </p>
+          </div>
         </div>
         
         <button
@@ -379,10 +365,10 @@ const upiApps = [
           {loading ? (
             <div className="flex items-center justify-center">
               <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-              Processing UPI Payment...
+              Processing...
             </div>
           ) : (
-            `Pay ₹${orderData.total.toLocaleString()}`
+            `Proceed to Pay ₹${orderData.total.toLocaleString()}`
           )}
         </button>
       </div>

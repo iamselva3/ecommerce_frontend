@@ -120,7 +120,7 @@ const UserProfile = () => {
           credentials: "include"
         });
         const data = await res.json();
-        setOrders(data.data.orders || []);
+        setOrders(data?.data?.orders || data?.data || []);
       } catch (err) {
         console.error("Failed to fetch orders:", err);
       }

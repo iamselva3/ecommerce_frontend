@@ -3,7 +3,7 @@ import { Star, Heart, ShoppingBag, Eye } from "lucide-react";
 import ProductCard from "./ProductCard";
 import LogoLoader from "./LogoLoader";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
 
 const FeaturedProducts = () => {
   const [products, setProducts] = useState([]);

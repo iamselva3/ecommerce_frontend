@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, X, Send, Minimize2, Maximize2, Sparkles, Loader } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
 
 const AIAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);

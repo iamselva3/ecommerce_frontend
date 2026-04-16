@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Logo from '../../public/Logo.png'; // Adjust the path to your logo
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
 
 const Register = () => {
   const navigate = useNavigate();

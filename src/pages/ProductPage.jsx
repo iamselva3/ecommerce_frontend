@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import LogoLoader from "../components/LogoLoader";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
 
 // Helper function to format sizes for display
 const formatSizeForDisplay = (size, category) => {

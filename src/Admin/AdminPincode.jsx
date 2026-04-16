@@ -7,7 +7,7 @@ import {
   Upload, RefreshCw, Save, Eye, AlertCircle
 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
 
 const AdminPincodes = () => {
   const [pincodes, setPincodes] = useState([]);

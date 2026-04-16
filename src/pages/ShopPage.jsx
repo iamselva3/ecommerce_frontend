@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { ChevronLeft, ChevronRight, Heart, ShoppingBag, Eye, Star } from "lucide-react";
 import LogoLoader from "../components/LogoLoader";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
 
 const ShopPage = () => {
   const [categories, setCategories] = useState([]);

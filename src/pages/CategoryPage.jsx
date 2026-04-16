@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, ShoppingBag, Check } from "lucide-react";
 import { toast } from "react-toastify";
 import LogoLoader from "../components/LogoLoader";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
 
 const CategoryPage = () => {
   const { category } = useParams();

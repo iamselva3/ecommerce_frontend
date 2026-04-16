@@ -4,7 +4,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import AppleSignin from 'react-apple-signin-auth';
 import Logo from '../../public/Logo.png'
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
 
 const Login = () => {
   const navigate = useNavigate();

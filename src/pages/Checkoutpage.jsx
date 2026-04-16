@@ -5,7 +5,7 @@ import { Trash2, Plus, Minus, ArrowLeft, Check, Home, MapPin, Building, ChevronD
 import LogoLoader from "../components/LogoLoader";
 import PincodeChecker from '../components/PincodeChecker';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
 
 const formatSizeForDisplay = (size, category) => {
   if (!size) return size;

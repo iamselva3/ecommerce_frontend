@@ -31,7 +31,7 @@ const AdminLayout = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/logout`, { method: "POST", credentials: "include" });
+      await fetch(`${import.meta.env.VITE_API_URL || ""}/api/users/logout`, { method: "POST", credentials: "include" });
     } catch (err) {
       console.error(err);
     }

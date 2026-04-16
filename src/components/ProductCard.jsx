@@ -3,7 +3,7 @@ import { Star, Heart, ShoppingBag, Eye } from "lucide-react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
 
 const ProductCard = ({ product }) => {
 

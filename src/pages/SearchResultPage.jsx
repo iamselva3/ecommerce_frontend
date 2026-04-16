@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Search, Filter, Sliders, Grid, List, Package, Star, Clock, Heart } from 'lucide-react';
 import { toast } from 'react-toastify';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
 
 const SearchResultsPage = () => {
   const [searchParams] = useSearchParams();

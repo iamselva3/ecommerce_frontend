@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { X, Upload, Image as ImageIcon } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
 
 const AVAILABLE_SIZES = ["xs","s", "m", "l", "xl", "xxl","xxxl"];
 const MAX_IMAGES = 10;

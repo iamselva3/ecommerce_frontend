@@ -144,6 +144,7 @@ useEffect(() => {
 
   const calculateDelivery = () => {
     return calculateSubtotal() > 999 ? 0 : 49;
+    // return 0;
   };
 
   const calculateTotal = () => {

@@ -128,7 +128,7 @@ const PaymentPage = () => {
         description: "Order Payment",
         order_id: order.id,
         handler: async function (response) {
-          await processOrder(method, "completed");
+          await processOrder(method, "completed", response);
         },
         prefill: {
           name: orderData.address?.fullName || user?.name || "",
@@ -143,7 +143,8 @@ const PaymentPage = () => {
       const paymentObject = new window.Razorpay(options);
       
       paymentObject.on('payment.failed', function (response) {
-          processOrder(method, "failed");
+          // You receive an error object in response.error
+          processOrder(method, "failed", response);
       });
       
       paymentObject.open();
@@ -162,8 +163,17 @@ const PaymentPage = () => {
     handleRazorpayPayment("upi");
   };
 
-  const processOrder = async (paymentMethod, paymentStatus = "completed") => {
+  const processOrder = async (paymentMethod, paymentStatus = "completed", razorpayResponse = null) => {
     try {
+      let transactionId = null;
+      if (razorpayResponse) {
+        if (paymentStatus === "completed") {
+           transactionId = razorpayResponse.razorpay_payment_id;
+        } else if (paymentStatus === "failed" && razorpayResponse.error) {
+           transactionId = razorpayResponse.error.metadata?.payment_id;
+        }
+      }
+
       const orderDataToSend = {
         items: orderData.items.map((item) => ({
           productId: item.productId,
@@ -183,6 +193,8 @@ const PaymentPage = () => {
         shippingAddress: orderData.address,
         paymentMethod: paymentMethod,
         paymentStatus: paymentStatus,
+        transactionId: transactionId,
+        paidAmount: paymentStatus === "completed" ? orderData.total : 0,
         isDirectBuy: orderData.isDirectBuy || false,
         notes: '',
         discount: 0,

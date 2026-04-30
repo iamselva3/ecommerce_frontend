@@ -9,6 +9,11 @@ import {
 import LogoLoader from "../components/LogoLoader";
 
 const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : "";
+const CATEGORIES = [
+   'shirts', 't-shirts', 'pants', 'shoes', 'kurtis', 'salwar', 'jeans', 
+  'skirts', 'sarees', 'gowns', 'accessories', 
+];
+
 
 const AdminEditProduct = () => {
   const { id } = useParams();
@@ -339,18 +344,31 @@ const AdminEditProduct = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category *
                 </label>
-                <input
-                  name="category"
-                  value={form.category}
-                  onChange={handleChange}
-                  placeholder="e.g. men, women, kids"
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                <div className="flex gap-2 flex-wrap">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      type="button"
+                      key={cat}
+                      onClick={() => setForm(prev => ({ ...prev, category: cat }))}
+                      className={`px-3 py-1.5 border rounded-full text-sm font-medium transition-all ${
+                        form.category === cat
+                          ? "bg-black text-white border-black"
+                          : "bg-white hover:border-gray-400 text-gray-700"
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                {form.category && (
+                  <p className="text-xs text-blue-600 mt-2 font-medium">
+                    Selected: <span className="uppercase">{form.category}</span>
+                  </p>
+                )}
               </div>
 
               <div>

@@ -6,6 +6,10 @@ const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : ""
 
 const AVAILABLE_SIZES = ["xs","s", "m", "l", "xl", "xxl","xxxl"];
 const MAX_IMAGES = 10;
+const CATEGORIES = [
+   'shirts', 't-shirts', 'pants', 'shoes', 'kurtis', 'salwar', 'jeans','skirts', 'sarees', 'gowns'
+];
+
 
 const AdminUpload = () => {
 
@@ -217,20 +221,30 @@ const handleSubmit = async (e) => {
           />
         </div>
 
-        {/* Category - Simple Input Box */}
+        {/* Category Selection */}
         <div>
-          <label className="block text-sm font-medium mb-1">Category *</label>
-          <input
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            placeholder="e.g., t-shirts, shoes, accessories"
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-            required
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Enter any category (will be validated by server)
-          </p>
+          <label className="block text-sm font-medium mb-2">Category *</label>
+          <div className="flex gap-2 flex-wrap">
+            {CATEGORIES.map((cat) => (
+              <button
+                type="button"
+                key={cat}
+                onClick={() => setForm(prev => ({ ...prev, category: cat }))}
+                className={`px-3 py-1.5 border rounded-full text-sm font-medium transition-all ${
+                  form.category === cat
+                    ? "bg-black text-white border-black"
+                    : "bg-white hover:border-gray-400 text-gray-700"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          {form.category && (
+            <p className="text-xs text-blue-600 mt-2 font-medium">
+              Selected: <span className="uppercase">{form.category}</span>
+            </p>
+          )}
         </div>
 
         {/* Sizes */}
